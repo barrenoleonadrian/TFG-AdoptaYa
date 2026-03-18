@@ -13,3 +13,7 @@ app.use("/mascotas", mascotasRoutes);
 app.listen(3000, () => {
     console.log("Servidor funcionando en puerto 3000");
 });
+
+const path = require("path")
+
+app.use("/img", express.static(path.join(__dirname, "img")))

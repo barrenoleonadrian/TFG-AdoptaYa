@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Adoptar - AdoptaYa</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-slate-50 font-sans">
+
+
+<!-- NAVBAR -->
+
+<nav class="fixed top-0 w-full bg-blue-900 text-white flex justify-between items-center px-8 py-4 shadow-lg z-50">
+<div class="flex items-center gap-2">
+<img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full bg-white p-1"/>
+<span class="text-xl font-black">Adopta<span class="text-yellow-400">Ya</span></span>
+</div>
+
+<div class="hidden md:flex gap-6 text-sm font-semibold">
+<a href="index.html" class="hover:text-yellow-400">Inicio</a>
+<a href="adoptar.html" class="text-yellow-400">Adoptar</a>
+<a href="#" class="hover:text-yellow-400">Refugios</a>
+<a href="#" class="hover:text-yellow-400">Cómo funciona</a>
+<a href="#" class="hover:text-yellow-400">Contacto</a>
+</div>
+
+<div class="flex items-center gap-3 text-sm">
+<a href="#" class="hover:text-yellow-400">Iniciar sesión</a>
+<a href="#" class="bg-yellow-400 text-blue-900 font-black px-4 py-1.5 rounded-full hover:bg-yellow-300">Registrarse</a>
+</div>
+</nav>
+
+
+<!-- FILTROS (copiados del index) -->
+
+<section class="max-w-4xl mx-auto px-6 pt-32 pb-10">
+
+<h2 class="text-3xl font-black text-blue-900 mb-6">
+Encuentra a tu compañero
+</h2>
+
+<div class="bg-white border-2 border-blue-100 rounded-2xl p-4 shadow flex flex-wrap gap-3">
+
+<select id="tipo" class="flex-1 min-w-36 outline-none text-sm text-gray-700 border-r border-blue-100 pr-3">
+<option>Tipo de animal</option>
+<option value="perro">Perro</option>
+<option value="gato">Gato</option>
+<option value="conejo">Conejo</option>
+<option value="pajaro">Pájaro</option>
+</select>
+
+<select id="ciudad" class="flex-1 min-w-36 outline-none text-sm text-gray-700 border-r border-blue-100 pr-3">
+<option>Provincia</option>
+<option value="Madrid">Madrid</option>
+<option value="Barcelona">Barcelona</option>
+<option value="Valencia">Valencia</option>
+<option value="Sevilla">Sevilla</option>
+</select>
+
+<input id="busqueda" type="text" placeholder="Buscar por nombre o raza..." 
+class="flex-1 min-w-40 outline-none text-sm text-gray-700"/>
+
+<button onclick="filtrarMascotas()" 
+class="bg-yellow-400 text-blue-900 font-black px-5 py-2 rounded-xl text-sm hover:bg-yellow-300">
+Buscar
+</button>
+
+</div>
+
+</section>
+
+
+<!-- MASCOTAS -->
+
+<section class="max-w-5xl mx-auto px-6 pb-16">
+
+<h2 class="text-3xl font-black text-blue-900 mb-6">
+Animales en adopción
+</h2>
+
+<div id="mascotas-container" class="grid grid-cols-2 md:grid-cols-3 gap-5"></div>
+
+</section>
+
+
+
+<!-- FOOTER -->
+
+<footer class="bg-gray-900 text-gray-500 text-sm flex justify-between items-center flex-wrap gap-3 px-8 py-5">
+<div class="flex items-center gap-2">
+<img src="img/logo.png" alt="Logo" class="w-8 h-8 rounded-full bg-white p-0.5"/>
+<span class="text-white font-black">Adopta<span class="text-yellow-400">Ya</span></span>
+</div>
+
+<p>AdoptaYa - Adrian Barreno</p>
+
+<div class="flex gap-4">
+<a href="#" class="hover:text-white">Contacto</a>
+</div>
+</footer>
+
+
+
+<script src="js/adoptar.js"></script>
+
+
+</body>
+</html>

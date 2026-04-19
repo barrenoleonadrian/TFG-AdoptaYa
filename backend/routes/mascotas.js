@@ -3,6 +3,8 @@ const router = express.Router();
 
 const mascotasController = require("../controllers/mascotasController");
 
+router.get("/mascotas/:id", mascotasController.obtenerMascota);
+
 router.get("/", mascotasController.obtenerMascotas);
 
 router.get("/:id", mascotasController.obtenerMascota);

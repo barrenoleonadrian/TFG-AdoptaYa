@@ -1,17 +1,20 @@
 const express = require("express")
+const cors = require("cors")
 const app = express()
 
 const mascotasRoutes = require("./routes/mascotasRoutes")
 const usuariosRoutes = require("./routes/usuariosRoutes")
+const adminRoutes = require("./routes/adminRoutes")
 
+app.use(cors())
 app.use(express.json())
 
-app.use(mascotasRoutes)
 app.use(usuariosRoutes)
+app.use(mascotasRoutes)
+app.use(adminRoutes)
 
-// servir imágenes
-app.use("/img",express.static("img"))
+app.use("/img", express.static("img"))
 
-app.listen(3000,()=>{
+app.listen(3000, () => {
     console.log("Servidor funcionando en puerto 3000")
 })

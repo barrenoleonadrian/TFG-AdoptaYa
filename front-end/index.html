@@ -1,135 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AdoptaYa</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50%       { transform: translateY(-12px); }
-    }
-    .float { animation: float 4s ease-in-out infinite; }
-  </style>
-</head>
-<body class="bg-slate-50 font-sans">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/img/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Conectamos refugios y animales con familias que quieren dar el paso. Encuentra a tu compañero ideal." />
+    <title>AdoptaYa — Encuentra a tu compañero ideal</title>
 
-  <nav class="fixed top-0 w-full bg-blue-900 text-white flex justify-between items-center px-8 py-4 shadow-lg z-50">
-    <div class="flex items-center gap-2">
-      <img src="img/logo.png" alt="Logo" class="w-10 h-10 rounded-full bg-white p-1"/>
-      <span class="text-xl font-black">Adopta<span class="text-yellow-400">Ya</span></span>
-    </div>
-    <div class="hidden md:flex gap-6 text-sm font-semibold">
-      <a href="adoptar.html" class="hover:text-yellow-400">Adoptar</a>
-      <a href="#" class="hover:text-yellow-400">Refugios</a>
-      <a href="#" class="hover:text-yellow-400">Cómo funciona</a>
-      <a href="#" class="hover:text-yellow-400">Contacto</a>
-    </div>
-    <div class="flex items-center gap-3 text-sm">
-      <a href="#" class="hover:text-yellow-400">Iniciar sesión</a>
-      <a href="#" class="bg-yellow-400 text-blue-900 font-black px-4 py-1.5 rounded-full hover:bg-yellow-300">Registrarse</a>
-    </div>
-  </nav>
-
-  <section class="bg-gradient-to-br from-blue-900 to-blue-700 min-h-screen flex items-center px-8 pt-24 pb-12 gap-10 flex-wrap">
-    <div class="flex-1 min-w-72 max-w-lg">
-      <h1 class="text-5xl font-black text-white leading-tight mb-4">
-        Dale un hogar a quien más lo <span class="text-yellow-400">necesita</span>
-      </h1>
-      <p class="text-white/75 text-base mb-8">
-        Conectamos refugios y animales con familias que quieren dar el paso. Busca, filtra y encuentra a tu compañero ideal.
-      </p>
-      <div class="flex gap-4 flex-wrap">
-        <button class="bg-yellow-400 text-blue-900 font-black px-6 py-3 rounded-full shadow-lg hover:bg-yellow-300">Buscar animales</button>
-        <button class="border-2 border-white/40 text-white font-bold px-6 py-3 rounded-full hover:border-white">Soy un refugio</button>
-      </div>
-    </div>
-    <div class="flex-1 flex justify-center min-w-60">
-      <img src="img/logo.png" alt="Logo" class="w-64 h-64 rounded-full bg-white/10 p-4 float"/>
-    </div>
-  </section>
-
-  <div class="bg-yellow-400 grid grid-cols-3 text-center py-8">
-    <div>
-      <p class="text-4xl font-black text-blue-900">100</p>
-      <p class="text-sm font-bold text-blue-900/70 mt-1">Animales en adopción</p>
-    </div>
-    <div>
-      <p class="text-4xl font-black text-blue-900">100</p>
-      <p class="text-sm font-bold text-blue-900/70 mt-1">Refugios asociados</p>
-    </div>
-    <div>
-      <p class="text-4xl font-black text-blue-900">100+</p>
-      <p class="text-sm font-bold text-blue-900/70 mt-1">Adopciones realizadas</p>
-    </div>
-  </div>
-
-  <section class="bg-blue-50 py-16 px-6 text-center">
-    <h2 class="text-3xl font-black text-blue-900 mb-10">¿Cómo funciona?</h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-5 max-w-4xl mx-auto">
-      <div class="bg-white rounded-2xl p-6 shadow">
-        <h3 class="font-black text-blue-900 mb-1">Busca</h3>
-        <p class="text-xs text-gray-500">Busca el tipo de mascota que quieres encontrasr.</p>
-      </div>
-      <div class="bg-white rounded-2xl p-6 shadow">
-        <h3 class="font-black text-blue-900 mb-1">Filtra</h3>
-        <p class="text-xs text-gray-500">Encuentra el animal que encaje con tu estilo de vida.</p>
-      </div>
-      <div class="bg-white rounded-2xl p-6 shadow">
-        <h3 class="font-black text-blue-900 mb-1">Solicita</h3>
-        <p class="text-xs text-gray-500">Completa el proceso desde tu perfil de adoptante.</p>
-      </div>
-      <div class="bg-white rounded-2xl p-6 shadow">
-        <h3 class="font-black text-blue-900 mb-1">¡Nuevo hogar!</h3>
-        <p class="text-xs text-gray-500">Dale la bienvenida a tu nuevo compañero.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="max-w-5xl mx-auto px-6 py-16">
-    <h2 class="text-3xl font-black text-blue-900 mb-6">Refugios colaboradores</h2>
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-      <div class="border-2 border-blue-100 rounded-2xl p-4 flex items-center gap-3 hover:border-blue-900 hover:bg-blue-50 cursor-pointer transition">
-        <div><p class="font-black text-blue-900 text-sm">Refugio Esperanza</p><p class="text-xs text-gray-500">Madrid · 48 animales</p></div>
-      </div>
-      <div class="border-2 border-blue-100 rounded-2xl p-4 flex items-center gap-3 hover:border-blue-900 hover:bg-blue-50 cursor-pointer transition">
-        <div><p class="font-black text-blue-900 text-sm">Patitas Felices</p><p class="text-xs text-gray-500">Barcelona · 62 animales</p></div>
-      </div>
-      <div class="border-2 border-blue-100 rounded-2xl p-4 flex items-center gap-3 hover:border-blue-900 hover:bg-blue-50 cursor-pointer transition">
-        <div><p class="font-black text-blue-900 text-sm">La Pradera Animal</p><p class="text-xs text-gray-500">Valencia · 31 animales</p></div>
-      </div>
-      <div class="border-2 border-blue-100 rounded-2xl p-4 flex items-center gap-3 hover:border-blue-900 hover:bg-blue-50 cursor-pointer transition">
-        <div><p class="font-black text-blue-900 text-sm">Amor Sin Límites</p><p class="text-xs text-gray-500">Sevilla · 25 animales</p></div>
-      </div>
-      <div class="border-2 border-blue-100 rounded-2xl p-4 flex items-center gap-3 hover:border-blue-900 hover:bg-blue-50 cursor-pointer transition">
-        <div><p class="font-black text-blue-900 text-sm">Huella Buena</p><p class="text-xs text-gray-500">Bilbao · 19 animales</p></div>
-      </div>
-      <div class="border-2 border-blue-100 rounded-2xl p-4 flex items-center gap-3 hover:border-blue-900 hover:bg-blue-50 cursor-pointer transition">
-        <div><p class="font-black text-blue-900 text-sm">Can i Gat</p><p class="text-xs text-gray-500">Girona · 40 animales</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="bg-blue-900 text-white text-center py-16 px-6">
-    <h2 class="text-4xl font-black mb-3">¿Tienes un <span class="text-yellow-400">refugio</span>?</h2>
-    <p class="text-white/70 mb-8">Regístrate como protectora y publica tus animales de forma gratuita.</p>
-    <div class="flex justify-center gap-4 flex-wrap">
-      <button class="bg-yellow-400 text-blue-900 font-black px-7 py-3 rounded-full hover:bg-yellow-300">Registrar mi refugio</button>
-      <button class="border-2 border-white/40 text-white font-bold px-7 py-3 rounded-full hover:border-white">Saber más</button>
-    </div>
-  </section>
-
-  <footer class="bg-gray-900 text-gray-500 text-sm flex justify-between items-center flex-wrap gap-3 px-8 py-5">
-    <div class="flex items-center gap-2">
-      <img src="img/logo.png" alt="Logo" class="w-8 h-8 rounded-full bg-white p-0.5"/>
-      <span class="text-white font-black">Adopta<span class="text-yellow-400">Ya</span></span>
-    </div>
-    <p>AdoptaYa - Adrian Barreno</p>
-    <div class="flex gap-4">
-      <a href="#" class="hover:text-white">Contacto</a>
-    </div>
-  </footer>
-
-</body>
+    <!-- Inter: una sola tipografía para toda la web -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

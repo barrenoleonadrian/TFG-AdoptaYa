@@ -75,6 +75,32 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
     }
 
 
+    // contacta con el refugio que publicó esta mascota
+    function contactar(){
+
+        if(!usuario){
+            alert("Debes iniciar sesión para contactar con el refugio")
+            sessionStorage.setItem("volver", "mascota/" + id)
+            navegar("login")
+            return
+        }
+
+        if(usuario.tipo !== "adoptante"){
+            alert("Solo los adoptantes pueden contactar con los refugios")
+            return
+        }
+
+        // pasamos al chat directamente con el dueño de la mascota
+        // (necesitamos saber su nombre, lo buscamos en el detalle)
+        sessionStorage.setItem("contactarCon", JSON.stringify({
+            id: mascota.usuario_id,
+            nombre: "Refugio"   // el nombre real lo cargará cuando lo busque
+        }))
+        navegar("mensajes")
+
+    }
+
+
     return (
         <div>
 
@@ -127,9 +153,14 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
                                     <p className="detalle-descripcion">{mascota.descripcion}</p>
                                 )}
 
-                                <button onClick={adoptar} className="btn btn-acento btn-grande">
-                                    Solicitar adopción →
-                                </button>
+                                <div style={{display: "flex", gap: "12px", flexWrap: "wrap"}}>
+                                    <button onClick={adoptar} className="btn btn-acento btn-grande">
+                                        Solicitar adopción →
+                                    </button>
+                                    <button onClick={contactar} className="btn btn-ghost btn-grande">
+                                        Contactar con el refugio
+                                    </button>
+                                </div>
 
                             </div>
 

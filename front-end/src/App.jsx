@@ -5,6 +5,9 @@ import Mascota from "./pages/Mascota.jsx"
 import Login from "./pages/Login.jsx"
 import NuevaMascota from "./pages/NuevaMascota.jsx"
 import Admin from "./pages/Admin.jsx"
+import Refugios from "./pages/Refugios.jsx"
+import MiRefugio from "./pages/MiRefugio.jsx"
+import Mensajes from "./pages/Mensajes.jsx"
 
 // Router sencillo hecho con useState.
 // La ruta es un string tipo "home", "adoptar", "login", "mascota", "nueva-mascota"
@@ -99,6 +102,38 @@ export default function App() {
             return null
         }
         return <Admin usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+    }
+
+    if(ruta === "refugios"){
+        return <Refugios usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+    }
+
+    if(ruta === "mi-refugio"){
+        // solo los refugios pueden editar su perfil
+        if(!usuario || usuario.tipo !== "protectora"){
+            navegar("home")
+            return null
+        }
+        return <MiRefugio usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+    }
+
+    if(ruta === "mensajes"){
+        // solo los usuarios logueados pueden ver mensajes
+        if(!usuario){
+            navegar("login")
+            return null
+        }
+
+        // si venimos de una mascota con un refugio para contactar,
+        // lo recogemos del sessionStorage
+        let contactarCon = null
+        const guardado = sessionStorage.getItem("contactarCon")
+        if(guardado){
+            contactarCon = JSON.parse(guardado)
+            sessionStorage.removeItem("contactarCon")
+        }
+
+        return <Mensajes usuario={usuario} onLogout={hacerLogout} navegar={navegar} contactarCon={contactarCon} />
     }
 
     // por defecto → home

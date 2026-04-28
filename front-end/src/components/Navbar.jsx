@@ -1,8 +1,47 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+
+const API = "http://localhost:3000"
 
 export default function Navbar({ usuario, onLogout, navegar, activo }) {
 
     const [abierto, setAbierto] = useState(false)
+    const [scrolleado, setScrolleado] = useState(false)
+    const [sinLeer, setSinLeer] = useState(0)
+
+
+    // detectamos el scroll para añadir una sombra sutil al navbar
+    useEffect(() => {
+        function handleScroll(){
+            setScrolleado(window.scrollY > 10)
+        }
+        window.addEventListener("scroll", handleScroll)
+        return () => window.removeEventListener("scroll", handleScroll)
+    }, [])
+
+
+    // comprobamos cada 30 segundos cuántos mensajes sin leer hay
+    useEffect(() => {
+        if(!usuario) return
+
+        comprobarMensajes()
+        const intervalo = setInterval(comprobarMensajes, 30000)
+        return () => clearInterval(intervalo)
+    }, [usuario])
+
+
+    async function comprobarMensajes(){
+        try{
+            const token = localStorage.getItem("token")
+            const res = await fetch(API + "/mensajes/sin-leer", {
+                headers: {"Authorization": "Bearer " + token}
+            })
+            const data = await res.json()
+            setSinLeer(data.total || 0)
+        }catch(err){
+            // ignoramos errores aquí
+        }
+    }
+
 
     function ir(ruta){
         setAbierto(false)
@@ -10,7 +49,7 @@ export default function Navbar({ usuario, onLogout, navegar, activo }) {
     }
 
     return (
-        <nav className="navbar">
+        <nav className={"navbar " + (scrolleado ? "scrolleada" : "")}>
             <div className="navbar-inner">
 
                 <a href="#home" className="logo" onClick={(e) => { e.preventDefault(); ir("home") }}>
@@ -29,7 +68,11 @@ export default function Navbar({ usuario, onLogout, navegar, activo }) {
                        onClick={(e) => { e.preventDefault(); ir("adoptar") }}>
                         Adoptar
                     </a>
-                    <a href="#">Refugios</a>
+                    <a href="#refugios"
+                       className={activo === "refugios" ? "activo" : ""}
+                       onClick={(e) => { e.preventDefault(); ir("refugios") }}>
+                        Refugios
+                    </a>
                     <a href="#">Cómo funciona</a>
                 </div>
 
@@ -37,12 +80,26 @@ export default function Navbar({ usuario, onLogout, navegar, activo }) {
 
                     {usuario ? (
                         <>
+                            <a href="#mensajes"
+                               className={"btn-link nav-mensajes " + (activo === "mensajes" ? "activo" : "")}
+                               onClick={(e) => { e.preventDefault(); ir("mensajes") }}>
+                                Mensajes
+                                {sinLeer > 0 && <span className="nav-badge">{sinLeer}</span>}
+                            </a>
+
                             {usuario.tipo === "protectora" && (
-                                <a href="#nueva-mascota"
-                                   className="btn btn-acento"
-                                   onClick={(e) => { e.preventDefault(); ir("nueva-mascota") }}>
-                                    Añadir mascota
-                                </a>
+                                <>
+                                    <a href="#mi-refugio"
+                                       className="btn-link"
+                                       onClick={(e) => { e.preventDefault(); ir("mi-refugio") }}>
+                                        Mi refugio
+                                    </a>
+                                    <a href="#nueva-mascota"
+                                       className="btn btn-acento"
+                                       onClick={(e) => { e.preventDefault(); ir("nueva-mascota") }}>
+                                        Añadir mascota
+                                    </a>
+                                </>
                             )}
                             {usuario.tipo === "admin" && (
                                 <a href="#admin"

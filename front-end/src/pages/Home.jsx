@@ -1,14 +1,38 @@
+import { useState, useEffect } from "react"
 import Navbar from "../components/Navbar.jsx"
 import Footer from "../components/Footer.jsx"
+import { useReveal } from "../hooks/useReveal.js"
+
+const API = "http://localhost:3000"
 
 export default function Home({ usuario, onLogout, navegar }) {
+
+    // cargamos los 6 primeros refugios para la sección "Refugios colaboradores"
+    const [refugios, setRefugios] = useState([])
+
+    // activa las animaciones al hacer scroll, se reinicia cuando llegan los refugios
+    useReveal(refugios)
+
+    useEffect(() => {
+        cargarRefugios()
+    }, [])
+
+    async function cargarRefugios(){
+        try{
+            const res = await fetch(API + "/refugios?limite=6")
+            const data = await res.json()
+            setRefugios(data)
+        }catch(err){
+            console.log("Error al cargar refugios:", err)
+        }
+    }
 
     return (
         <div>
 
             <Navbar usuario={usuario} onLogout={onLogout} navegar={navegar} activo="home" />
 
-            {/* HERO: claridad brutal — qué es, qué ofrece, qué hacer */}
+            {/* HERO: imagen de fondo + texto centrado encima */}
             <section className="hero">
                 <div className="hero-contenido">
 
@@ -43,7 +67,7 @@ export default function Home({ usuario, onLogout, navegar }) {
 
             {/* STATS: prueba social */}
             <section className="stats">
-                <div className="stats-grid">
+                <div className="stats-grid reveal-grupo">
                     <div>
                         <p className="stats-num">100+</p>
                         <p className="stats-label">Animales en adopción</p>
@@ -64,13 +88,13 @@ export default function Home({ usuario, onLogout, navegar }) {
             <section className="seccion">
                 <div className="contenedor">
 
-                    <div className="seccion-cabecera">
+                    <div className="seccion-cabecera reveal">
                         <span className="eyebrow">Cómo funciona</span>
                         <h2>Adoptar, paso a paso</h2>
                         <p>Un proceso pensado para que tomes la mejor decisión, sin complicaciones.</p>
                     </div>
 
-                    <div className="features">
+                    <div className="features reveal-grupo">
                         <div className="feature">
                             <div className="feature-icono">01</div>
                             <h3>Explora</h3>
@@ -101,38 +125,38 @@ export default function Home({ usuario, onLogout, navegar }) {
             <section className="seccion seccion-gris">
                 <div className="contenedor">
 
-                    <div className="seccion-cabecera">
+                    <div className="seccion-cabecera reveal">
                         <span className="eyebrow">Colaboradores</span>
                         <h2>Refugios de toda España</h2>
                         <p>Trabajamos con protectoras verificadas en cada comunidad.</p>
                     </div>
 
-                    <div className="refugios-grid">
-                        <div className="refugio-card">
-                            <h4>Refugio Esperanza</h4>
-                            <p>Madrid · 48 animales</p>
-                        </div>
-                        <div className="refugio-card">
-                            <h4>Patitas Felices</h4>
-                            <p>Barcelona · 62 animales</p>
-                        </div>
-                        <div className="refugio-card">
-                            <h4>La Pradera Animal</h4>
-                            <p>Valencia · 31 animales</p>
-                        </div>
-                        <div className="refugio-card">
-                            <h4>Amor Sin Límites</h4>
-                            <p>Sevilla · 25 animales</p>
-                        </div>
-                        <div className="refugio-card">
-                            <h4>Huella Buena</h4>
-                            <p>Bilbao · 19 animales</p>
-                        </div>
-                        <div className="refugio-card">
-                            <h4>Can i Gat</h4>
-                            <p>Girona · 40 animales</p>
-                        </div>
-                    </div>
+                    {refugios.length === 0 ? (
+                        <p style={{textAlign: "center", color: "var(--gris-500)"}}>
+                            Aún no hay refugios registrados. ¡Sé el primero!
+                        </p>
+                    ) : (
+                        <>
+                            <div className="refugios-grid reveal-grupo">
+                                {refugios.map((r) => (
+                                    <div key={r.id} className="refugio-card"
+                                         onClick={() => navegar("refugios")}
+                                         style={{cursor: "pointer"}}>
+                                        <h4>{r.nombre}</h4>
+                                        <p>{r.ciudad || "Sin ubicación"} · {r.num_mascotas} mascota{r.num_mascotas !== 1 ? "s" : ""}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div style={{textAlign: "center", marginTop: "32px"}} className="reveal">
+                                <a href="#refugios"
+                                   className="btn btn-ghost"
+                                   onClick={(e) => { e.preventDefault(); navegar("refugios") }}>
+                                    Ver todos los refugios →
+                                </a>
+                            </div>
+                        </>
+                    )}
 
                 </div>
             </section>
@@ -140,7 +164,7 @@ export default function Home({ usuario, onLogout, navegar }) {
 
             {/* CTA */}
             <section className="cta">
-                <div className="cta-contenido">
+                <div className="cta-contenido reveal">
                     <h2>¿Tienes un refugio?</h2>
                     <p>Publica tus animales de forma gratuita y llega a miles de familias.</p>
                     <a href="#login"

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import Navbar from "../components/Navbar.jsx"
 import Footer from "../components/Footer.jsx"
+import { useReveal } from "../hooks/useReveal.js"
 
 const API = "http://localhost:3000"
 
@@ -19,6 +20,9 @@ export default function Adoptar({ usuario, onLogout, navegar }) {
     const [tipo, setTipo] = useState("")
     const [ciudad, setCiudad] = useState("")
     const [busqueda, setBusqueda] = useState("")
+
+    // reactiva el reveal cuando llegan las mascotas del backend
+    useReveal(mascotas)
 
 
     useEffect(() => {
@@ -93,7 +97,7 @@ export default function Adoptar({ usuario, onLogout, navegar }) {
                             <p>No hay animales que coincidan con tu búsqueda.</p>
                         </div>
                     ) : (
-                        <div className="mascotas-grid">
+                        <div className="mascotas-grid reveal-grupo" key={mascotas.length}>
                             {mascotas.map((m) => (
                                 <a
                                     key={m.id}

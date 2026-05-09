@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react"
 import Navbar from "../components/Navbar.jsx"
 import Footer from "../components/Footer.jsx"
+import Toast from "../components/Toast.jsx"
+import Confirm from "../components/Confirm.jsx"
 
 const API = "http://localhost:3000"
 
@@ -9,6 +11,12 @@ export default function Admin({ usuario, onLogout, navegar }) {
 
     // pestaña activa: "usuarios", "mascotas" o "solicitudes"
     const [pestana, setPestana] = useState("usuarios")
+
+    // toast compartido por todas las pestañas
+    const [toast, setToast] = useState(null)
+    function mostrar(texto, tipo = "ok"){
+        setToast({ texto, tipo })
+    }
 
     return (
         <div>
@@ -44,14 +52,22 @@ export default function Admin({ usuario, onLogout, navegar }) {
                     </div>
 
                     {/* CONTENIDO SEGÚN PESTAÑA */}
-                    {pestana === "usuarios" && <TablaUsuarios />}
-                    {pestana === "mascotas" && <TablaMascotas />}
-                    {pestana === "solicitudes" && <TablaSolicitudes />}
+                    {pestana === "usuarios" && <TablaUsuarios mostrar={mostrar} />}
+                    {pestana === "mascotas" && <TablaMascotas mostrar={mostrar} />}
+                    {pestana === "solicitudes" && <TablaSolicitudes mostrar={mostrar} />}
 
                 </div>
             </section>
 
             <Footer navegar={navegar} />
+
+            {toast && (
+                <Toast
+                    mensaje={toast.texto}
+                    tipo={toast.tipo}
+                    onCerrar={() => setToast(null)}
+                />
+            )}
 
         </div>
     )
@@ -60,9 +76,12 @@ export default function Admin({ usuario, onLogout, navegar }) {
 
 // ====== PESTAÑA USUARIOS ======
 
-function TablaUsuarios(){
+function TablaUsuarios({ mostrar }){
 
     const [usuarios, setUsuarios] = useState([])
+
+    // estado para el modal de confirmación: { mensaje, onConfirmar } o null
+    const [confirmacion, setConfirmacion] = useState(null)
 
     useEffect(() => {
         cargar()
@@ -75,9 +94,17 @@ function TablaUsuarios(){
                 headers: {"Authorization": "Bearer " + token}
             })
             const data = await res.json()
-            setUsuarios(data)
+            // si la respuesta no es un array (porque hubo un error), lo dejamos vacío
+            // así la página no se rompe al hacer .map()
+            if(Array.isArray(data)){
+                setUsuarios(data)
+            }else{
+                console.log("Error al cargar usuarios:", data)
+                setUsuarios([])
+            }
         }catch(err){
             console.log("Error:", err)
+            setUsuarios([])
         }
     }
 
@@ -94,15 +121,23 @@ function TablaUsuarios(){
             })
             const data = await res.json()
             if(!res.ok){
-                alert(data.mensaje)
+                mostrar(data.mensaje, "error")
                 return
             }
+            mostrar("Rol actualizado")
             cargar()
-        }catch(err){ alert("Error de conexión") }
+        }catch(err){ mostrar("Error de conexión", "error") }
+    }
+
+    // abre el modal de confirmación. La eliminación real se hace al confirmar.
+    function pedirEliminar(id){
+        setConfirmacion({
+            mensaje: "¿Seguro que quieres eliminar este usuario? Esta acción no se puede deshacer.",
+            onConfirmar: () => eliminar(id)
+        })
     }
 
     async function eliminar(id){
-        if(!confirm("¿Seguro que quieres eliminar este usuario?")) return
         try{
             const token = localStorage.getItem("token")
             const res = await fetch(API + "/admin/usuarios/" + id, {
@@ -111,23 +146,44 @@ function TablaUsuarios(){
             })
             const data = await res.json()
             if(!res.ok){
-                alert(data.mensaje)
+                mostrar(data.mensaje, "error")
                 return
             }
+            mostrar("Usuario eliminado")
             cargar()
-        }catch(err){ alert("Error de conexión") }
+        }catch(err){ mostrar("Error de conexión", "error") }
+    }
+
+
+    async function verificar(id){
+        try{
+            const token = localStorage.getItem("token")
+            const res = await fetch(API + "/admin/usuarios/" + id + "/verificar", {
+                method: "PUT",
+                headers: {"Authorization": "Bearer " + token}
+            })
+            const data = await res.json()
+            if(!res.ok){
+                mostrar(data.mensaje, "error")
+                return
+            }
+            mostrar("Refugio verificado")
+            cargar()
+        }catch(err){ mostrar("Error de conexión", "error") }
     }
 
     return (
-        <div className="tabla-wrapper">
-            <table className="tabla">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Rol</th>
-                        <th>Ciudad</th>
+        <>
+            <div className="tabla-wrapper">
+                <table className="tabla">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>CIF</th>
+                            <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -148,17 +204,46 @@ function TablaUsuarios(){
                                     <option value="admin">Admin</option>
                                 </select>
                             </td>
-                            <td>{u.ciudad || "—"}</td>
+                            <td>{u.cif || "—"}</td>
                             <td>
-                                <button onClick={() => eliminar(u.id)} className="btn-peligro">
-                                    Eliminar
-                                </button>
+                                {u.tipo === "protectora" ? (
+                                    u.verificado ? (
+                                        <span className="badge badge-disponible">Verificado</span>
+                                    ) : (
+                                        <span className="badge badge-pendiente">Pendiente</span>
+                                    )
+                                ) : (
+                                    <span style={{color: "var(--gris-500)", fontSize: "13px"}}>—</span>
+                                )}
+                            </td>
+                            <td>
+                                <div style={{display: "flex", gap: "6px"}}>
+                                    {u.tipo === "protectora" && !u.verificado && (
+                                        <button onClick={() => verificar(u.id)} className="btn btn-acento btn-pequeno">
+                                            Verificar
+                                        </button>
+                                    )}
+                                    <button onClick={() => pedirEliminar(u.id)} className="btn-peligro">
+                                        Eliminar
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
         </div>
+
+            {/* modal de confirmación al eliminar */}
+            {confirmacion && (
+                <Confirm
+                    mensaje={confirmacion.mensaje}
+                    textoConfirmar="Eliminar"
+                    onConfirmar={confirmacion.onConfirmar}
+                    onCancelar={() => setConfirmacion(null)}
+                />
+            )}
+        </>
     )
 
 }
@@ -166,9 +251,12 @@ function TablaUsuarios(){
 
 // ====== PESTAÑA MASCOTAS ======
 
-function TablaMascotas(){
+function TablaMascotas({ mostrar }){
 
     const [mascotas, setMascotas] = useState([])
+
+    // estado para el modal de confirmación
+    const [confirmacion, setConfirmacion] = useState(null)
 
     useEffect(() => {
         cargar()
@@ -181,12 +269,26 @@ function TablaMascotas(){
                 headers: {"Authorization": "Bearer " + token}
             })
             const data = await res.json()
-            setMascotas(data)
-        }catch(err){ console.log("Error:", err) }
+            if(Array.isArray(data)){
+                setMascotas(data)
+            }else{
+                console.log("Error al cargar mascotas:", data)
+                setMascotas([])
+            }
+        }catch(err){
+            console.log("Error:", err)
+            setMascotas([])
+        }
+    }
+
+    function pedirEliminar(id){
+        setConfirmacion({
+            mensaje: "¿Seguro que quieres eliminar esta mascota? Esta acción no se puede deshacer.",
+            onConfirmar: () => eliminar(id)
+        })
     }
 
     async function eliminar(id){
-        if(!confirm("¿Seguro que quieres eliminar esta mascota?")) return
         try{
             const token = localStorage.getItem("token")
             const res = await fetch(API + "/admin/mascotas/" + id, {
@@ -195,26 +297,28 @@ function TablaMascotas(){
             })
             const data = await res.json()
             if(!res.ok){
-                alert(data.mensaje)
+                mostrar(data.mensaje, "error")
                 return
             }
+            mostrar("Mascota eliminada")
             cargar()
-        }catch(err){ alert("Error de conexión") }
+        }catch(err){ mostrar("Error de conexión", "error") }
     }
 
     return (
-        <div className="tabla-wrapper">
-            <table className="tabla">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Tipo</th>
-                        <th>Raza</th>
-                        <th>Ciudad</th>
-                        <th>Estado</th>
-                        <th>Refugio</th>
-                        <th>Acciones</th>
+        <>
+            <div className="tabla-wrapper">
+                <table className="tabla">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Raza</th>
+                            <th>Ciudad</th>
+                            <th>Estado</th>
+                            <th>Refugio</th>
+                            <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -232,7 +336,7 @@ function TablaMascotas(){
                             </td>
                             <td>{m.refugio_nombre || "—"}</td>
                             <td>
-                                <button onClick={() => eliminar(m.id)} className="btn-peligro">
+                                <button onClick={() => pedirEliminar(m.id)} className="btn-peligro">
                                     Eliminar
                                 </button>
                             </td>
@@ -241,6 +345,17 @@ function TablaMascotas(){
                 </tbody>
             </table>
         </div>
+
+            {/* modal de confirmación al eliminar */}
+            {confirmacion && (
+                <Confirm
+                    mensaje={confirmacion.mensaje}
+                    textoConfirmar="Eliminar"
+                    onConfirmar={confirmacion.onConfirmar}
+                    onCancelar={() => setConfirmacion(null)}
+                />
+            )}
+        </>
     )
 
 }
@@ -248,7 +363,7 @@ function TablaMascotas(){
 
 // ====== PESTAÑA SOLICITUDES ======
 
-function TablaSolicitudes(){
+function TablaSolicitudes({ mostrar }){
 
     const [solicitudes, setSolicitudes] = useState([])
 
@@ -263,8 +378,16 @@ function TablaSolicitudes(){
                 headers: {"Authorization": "Bearer " + token}
             })
             const data = await res.json()
-            setSolicitudes(data)
-        }catch(err){ console.log("Error:", err) }
+            if(Array.isArray(data)){
+                setSolicitudes(data)
+            }else{
+                console.log("Error al cargar solicitudes:", data)
+                setSolicitudes([])
+            }
+        }catch(err){
+            console.log("Error:", err)
+            setSolicitudes([])
+        }
     }
 
     async function cambiarEstado(id, nuevoEstado){
@@ -280,11 +403,12 @@ function TablaSolicitudes(){
             })
             const data = await res.json()
             if(!res.ok){
-                alert(data.mensaje)
+                mostrar(data.mensaje, "error")
                 return
             }
+            mostrar(nuevoEstado === "aceptada" ? "Solicitud aceptada" : "Solicitud rechazada")
             cargar()
-        }catch(err){ alert("Error de conexión") }
+        }catch(err){ mostrar("Error de conexión", "error") }
     }
 
     return (

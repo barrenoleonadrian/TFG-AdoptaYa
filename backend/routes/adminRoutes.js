@@ -4,12 +4,15 @@ const router = express.Router()
 const adminController = require("../controllers/adminController")
 const {verificarToken, verificarAdmin} = require("../middleware/auth")
 
-// solo las rutas que empiezan por /admin necesitan ser admin
+// todas las rutas de admin pasan primero por verificarToken y luego por verificarAdmin
+// IMPORTANTE: el prefijo "/admin" es necesario para que estos middlewares
+// solo se apliquen a las rutas /admin/*, no a todo el servidor.
 router.use("/admin", verificarToken, verificarAdmin)
 
 // usuarios
 router.get("/admin/usuarios", adminController.listarUsuarios)
 router.put("/admin/usuarios/:id", adminController.cambiarRolUsuario)
+router.put("/admin/usuarios/:id/verificar", adminController.verificarRefugio)
 router.delete("/admin/usuarios/:id", adminController.eliminarUsuario)
 
 // mascotas

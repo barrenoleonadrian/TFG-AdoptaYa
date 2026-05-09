@@ -7,6 +7,8 @@ import NuevaMascota from "./pages/NuevaMascota.jsx"
 import Admin from "./pages/Admin.jsx"
 import Refugios from "./pages/Refugios.jsx"
 import MiRefugio from "./pages/MiRefugio.jsx"
+import MisMascotas from "./pages/MisMascotas.jsx"
+import MisSolicitudes from "./pages/MisSolicitudes.jsx"
 import Mensajes from "./pages/Mensajes.jsx"
 
 // Router sencillo hecho con useState.
@@ -73,51 +75,62 @@ export default function App() {
     }
 
 
-    // decide qué página mostrar
+    // decide qué página mostrar y la guarda en una variable
+    let pagina
+
     if(ruta === "adoptar"){
-        return <Adoptar usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+        pagina = <Adoptar usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
-
-    if(ruta === "mascota"){
-        return <Mascota id={param} usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+    else if(ruta === "mascota"){
+        pagina = <Mascota id={param} usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
-
-    if(ruta === "login"){
-        return <Login onLogin={hacerLogin} navegar={navegar} />
+    else if(ruta === "login"){
+        pagina = <Login onLogin={hacerLogin} navegar={navegar} />
     }
-
-    if(ruta === "nueva-mascota"){
+    else if(ruta === "nueva-mascota"){
         // si no eres refugio, te mandamos al home
         if(!usuario || usuario.tipo !== "protectora"){
             navegar("home")
             return null
         }
-        return <NuevaMascota usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+        pagina = <NuevaMascota usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
-
-    if(ruta === "admin"){
+    else if(ruta === "admin"){
         // solo el admin puede entrar
         if(!usuario || usuario.tipo !== "admin"){
             navegar("home")
             return null
         }
-        return <Admin usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+        pagina = <Admin usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
-
-    if(ruta === "refugios"){
-        return <Refugios usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+    else if(ruta === "refugios"){
+        pagina = <Refugios usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
-
-    if(ruta === "mi-refugio"){
+    else if(ruta === "mi-refugio"){
         // solo los refugios pueden editar su perfil
         if(!usuario || usuario.tipo !== "protectora"){
             navegar("home")
             return null
         }
-        return <MiRefugio usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+        pagina = <MiRefugio usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
-
-    if(ruta === "mensajes"){
+    else if(ruta === "mis-mascotas"){
+        // solo los refugios pueden ver sus mascotas y solicitudes
+        if(!usuario || usuario.tipo !== "protectora"){
+            navegar("home")
+            return null
+        }
+        pagina = <MisMascotas usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+    }
+    else if(ruta === "mis-solicitudes"){
+        // solo los adoptantes pueden ver sus solicitudes
+        if(!usuario || usuario.tipo !== "adoptante"){
+            navegar("home")
+            return null
+        }
+        pagina = <MisSolicitudes usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+    }
+    else if(ruta === "mensajes"){
         // solo los usuarios logueados pueden ver mensajes
         if(!usuario){
             navegar("login")
@@ -133,10 +146,15 @@ export default function App() {
             sessionStorage.removeItem("contactarCon")
         }
 
-        return <Mensajes usuario={usuario} onLogout={hacerLogout} navegar={navegar} contactarCon={contactarCon} />
+        pagina = <Mensajes usuario={usuario} onLogout={hacerLogout} navegar={navegar} contactarCon={contactarCon} />
+    }
+    else {
+        // por defecto → home
+        pagina = <Home usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
 
-    // por defecto → home
-    return <Home usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+
+    // devolvemos la página seleccionada
+    return pagina
 
 }

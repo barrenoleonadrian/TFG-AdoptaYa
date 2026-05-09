@@ -32,6 +32,14 @@ export default function Home({ usuario, onLogout, navegar }) {
 
             <Navbar usuario={usuario} onLogout={onLogout} navegar={navegar} activo="home" />
 
+            {/* aviso para refugios sin verificar */}
+            {usuario && usuario.tipo === "protectora" && usuario.verificado === false && (
+                <div className="banner-aviso">
+                    <strong>Cuenta pendiente de verificación.</strong> El administrador
+                    está revisando tus datos. Cuando esté verificado podrás publicar mascotas y gestionar tu refugio.
+                </div>
+            )}
+
             {/* HERO: imagen de fondo + texto centrado encima */}
             <section className="hero">
                 <div className="hero-contenido">

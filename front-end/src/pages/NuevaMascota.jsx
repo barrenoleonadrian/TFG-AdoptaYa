@@ -1,6 +1,7 @@
 import { useState } from "react"
 import Navbar from "../components/Navbar.jsx"
 import Footer from "../components/Footer.jsx"
+import Toast from "../components/Toast.jsx"
 
 const API = "http://localhost:3000"
 
@@ -15,6 +16,12 @@ export default function NuevaMascota({ usuario, onLogout, navegar }) {
     const [descripcion, setDescripcion] = useState("")
     const [imagen, setImagen] = useState(null)
     const [error, setError] = useState("")
+
+    // toast
+    const [toast, setToast] = useState(null)
+    function mostrar(texto, tipoToast = "ok"){
+        setToast({ texto, tipo: tipoToast })
+    }
 
 
     async function publicar(){
@@ -48,7 +55,7 @@ export default function NuevaMascota({ usuario, onLogout, navegar }) {
             const data = await res.json()
             if(!res.ok){ setError(data.mensaje || "Error al publicar"); return }
 
-            alert("Mascota publicada correctamente")
+            mostrar("Mascota publicada correctamente", "ok")
             navegar("adoptar")
 
         }catch(err){
@@ -143,6 +150,14 @@ export default function NuevaMascota({ usuario, onLogout, navegar }) {
             </section>
 
             <Footer navegar={navegar} />
+
+            {toast && (
+                <Toast
+                    mensaje={toast.texto}
+                    tipo={toast.tipo}
+                    onCerrar={() => setToast(null)}
+                />
+            )}
 
         </div>
     )

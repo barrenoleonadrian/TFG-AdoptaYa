@@ -1,14 +1,19 @@
+// Controlador de refugios: gestiona el listado público de refugios
+// y el perfil propio del refugio (solo accesible por el refugio dueño).
+
 const db = require("../db")
 
 
 // ====== PÚBLICO ======
 
-// Listar todos los refugios (con cuántas mascotas tienen)
-// Parámetro opcional ?limite=6 para el home.
+// Listar todos los refugios. Acepta un parámetro opcional ?limite=N
+// para que el home pueda pedir solo los 6 primeros.
+// Por cada refugio devolvemos también cuántas mascotas tiene publicadas.
 exports.listarRefugios = (req, res) => {
 
     const limite = req.query.limite ? parseInt(req.query.limite) : null
 
+    // LEFT JOIN para que aparezcan también los refugios sin mascotas (con num_mascotas = 0)
     let sql = `
         SELECT r.*, COUNT(m.id) AS num_mascotas
         FROM refugios r
@@ -23,7 +28,8 @@ exports.listarRefugios = (req, res) => {
 
     db.query(sql, (err, result) => {
         if(err){
-            return res.status(500).json({mensaje:"Error del servidor"})
+            console.log("ERROR SQL:", err)
+            return res.status(500).json({mensaje:"Error del servidor", detalle: err.message})
         }
         res.json(result)
     })
@@ -31,7 +37,7 @@ exports.listarRefugios = (req, res) => {
 }
 
 
-// Obtener un refugio concreto + sus mascotas
+// Obtener un refugio concreto + sus mascotas, para el modal de detalle.
 exports.obtenerRefugio = (req, res) => {
 
     const id = req.params.id
@@ -41,7 +47,8 @@ exports.obtenerRefugio = (req, res) => {
     db.query(sqlRefugio, [id], (err, result) => {
 
         if(err){
-            return res.status(500).json({mensaje:"Error del servidor"})
+            console.log("ERROR SQL:", err)
+            return res.status(500).json({mensaje:"Error del servidor", detalle: err.message})
         }
 
         if(result.length === 0){
@@ -50,12 +57,13 @@ exports.obtenerRefugio = (req, res) => {
 
         const refugio = result[0]
 
-        // también buscamos las mascotas que ha publicado este refugio
+        // segunda consulta: las mascotas que ha publicado este refugio
         const sqlMascotas = "SELECT * FROM mascotas WHERE usuario_id = ? ORDER BY id DESC"
 
         db.query(sqlMascotas, [refugio.usuario_id], (err, mascotas) => {
             if(err){
-                return res.status(500).json({mensaje:"Error del servidor"})
+                console.log("ERROR SQL:", err)
+                return res.status(500).json({mensaje:"Error del servidor", detalle: err.message})
             }
             res.json({
                 refugio: refugio,
@@ -70,7 +78,8 @@ exports.obtenerRefugio = (req, res) => {
 
 // ====== PRIVADO (solo el propio refugio) ======
 
-// Obtener mi perfil de refugio (si existe)
+// Obtener mi perfil de refugio (si existe). Si aún no lo ha creado,
+// devolvemos null para que el frontend muestre el formulario en blanco.
 exports.miRefugio = (req, res) => {
 
     if(req.usuario.tipo !== "protectora"){
@@ -81,10 +90,10 @@ exports.miRefugio = (req, res) => {
 
     db.query(sql, [req.usuario.id], (err, result) => {
         if(err){
-            return res.status(500).json({mensaje:"Error del servidor"})
+            console.log("ERROR SQL:", err)
+            return res.status(500).json({mensaje:"Error del servidor", detalle: err.message})
         }
 
-        // puede que aún no tenga perfil — devolvemos null en ese caso
         if(result.length === 0){
             return res.json(null)
         }
@@ -96,8 +105,8 @@ exports.miRefugio = (req, res) => {
 
 
 // Crear o actualizar mi perfil de refugio.
-// Si ya existe un registro con mi usuario_id → lo actualizo.
-// Si no → lo creo.
+// Si ya existe un registro con mi usuario_id, lo actualizamos. Si no, lo creamos.
+// Esto permite que el mismo formulario sirva para "crear primera vez" y "editar".
 exports.guardarMiRefugio = (req, res) => {
 
     if(req.usuario.tipo !== "protectora"){
@@ -119,13 +128,14 @@ exports.guardarMiRefugio = (req, res) => {
     db.query(checkSql, [req.usuario.id], (err, result) => {
 
         if(err){
-            return res.status(500).json({mensaje:"Error del servidor"})
+            console.log("ERROR SQL:", err)
+            return res.status(500).json({mensaje:"Error del servidor", detalle: err.message})
         }
 
         if(result.length > 0){
 
-            // ya existe → lo actualizamos
-            // si no se ha subido imagen nueva, mantenemos la que tenía
+            // ya existe: actualizamos. Si no se ha subido imagen nueva,
+            // mantenemos la que tenía guardada.
             const imagen = imagenNueva || result[0].imagen
 
             const sql = `
@@ -136,14 +146,15 @@ exports.guardarMiRefugio = (req, res) => {
 
             db.query(sql, [nombre, email, telefono, ciudad, descripcion, imagen, req.usuario.id], (err) => {
                 if(err){
-                    return res.status(500).json({mensaje:"Error al actualizar"})
+                    console.log("ERROR SQL:", err)
+                    return res.status(500).json({mensaje:"Error al actualizar", detalle: err.message})
                 }
                 res.json({mensaje:"Refugio actualizado"})
             })
 
         }else{
 
-            // no existe → lo creamos
+            // no existe: creamos uno nuevo
             const sql = `
                 INSERT INTO refugios (nombre, email, telefono, ciudad, descripcion, imagen, usuario_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -151,7 +162,8 @@ exports.guardarMiRefugio = (req, res) => {
 
             db.query(sql, [nombre, email, telefono, ciudad, descripcion, imagenNueva, req.usuario.id], (err) => {
                 if(err){
-                    return res.status(500).json({mensaje:"Error al crear"})
+                    console.log("ERROR SQL:", err)
+                    return res.status(500).json({mensaje:"Error al crear", detalle: err.message})
                 }
                 res.json({mensaje:"Refugio creado"})
             })

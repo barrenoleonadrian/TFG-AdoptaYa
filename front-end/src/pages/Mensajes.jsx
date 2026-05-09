@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import Navbar from "../components/Navbar.jsx"
 import Footer from "../components/Footer.jsx"
+import Toast from "../components/Toast.jsx"
 
 const API = "http://localhost:3000"
 
@@ -22,6 +23,12 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
 
     // referencia al final del chat para hacer scroll automático
     const finalChat = useRef(null)
+
+    // toast
+    const [toast, setToast] = useState(null)
+    function mostrar(mensajeToast, tipo = "ok"){
+        setToast({ texto: mensajeToast, tipo })
+    }
 
 
     // al cargar, traemos las conversaciones
@@ -116,7 +123,7 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
                 cargarConversaciones()  // para actualizar el último mensaje
             }
         }catch(err){
-            alert("Error al enviar")
+            mostrar("Error al enviar el mensaje", "error")
         }
 
     }
@@ -274,6 +281,14 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
             </section>
 
             <Footer navegar={navegar} />
+
+            {toast && (
+                <Toast
+                    mensaje={toast.texto}
+                    tipo={toast.tipo}
+                    onCerrar={() => setToast(null)}
+                />
+            )}
 
         </div>
     )

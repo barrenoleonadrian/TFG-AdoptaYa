@@ -6,13 +6,33 @@ const db = require("../db")
 // Listar todos los usuarios
 exports.listarUsuarios = (req, res) => {
 
-    const sql = "SELECT id, nombre, email, tipo, telefono, ciudad, fecha_registro FROM usuarios ORDER BY id DESC"
+    const sql = "SELECT id, nombre, email, tipo, cif, verificado, telefono, ciudad, fecha_registro FROM usuarios ORDER BY id DESC"
 
     db.query(sql, (err, result) => {
         if(err){
             return res.status(500).json({mensaje:"Error del servidor"})
         }
         res.json(result)
+    })
+
+}
+
+
+// Verificar un refugio (cambiar verificado a true)
+exports.verificarRefugio = (req, res) => {
+
+    const id = req.params.id
+
+    const sql = "UPDATE usuarios SET verificado = TRUE WHERE id = ? AND tipo = 'protectora'"
+
+    db.query(sql, [id], (err, result) => {
+        if(err){
+            return res.status(500).json({mensaje:"Error del servidor"})
+        }
+        if(result.affectedRows === 0){
+            return res.status(404).json({mensaje:"Refugio no encontrado"})
+        }
+        res.json({mensaje:"Refugio verificado"})
     })
 
 }

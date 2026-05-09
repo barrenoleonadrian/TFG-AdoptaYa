@@ -4,7 +4,7 @@ const path = require("path")
 
 const router = express.Router()
 const refugiosController = require("../controllers/refugiosController")
-const {verificarToken} = require("../middleware/auth")
+const {verificarToken, verificarRefugioActivo} = require("../middleware/auth")
 
 
 // configuración de multer (igual que en mascotas, para guardar imágenes en backend/img)
@@ -34,8 +34,8 @@ const upload = multer({
 router.get("/refugios", refugiosController.listarRefugios)
 router.get("/refugios/:id", refugiosController.obtenerRefugio)
 
-// rutas privadas (solo el refugio logueado)
-router.get("/mi-refugio", verificarToken, refugiosController.miRefugio)
-router.post("/mi-refugio", verificarToken, upload.single("imagen"), refugiosController.guardarMiRefugio)
+// rutas privadas (solo refugios verificados)
+router.get("/mi-refugio", verificarToken, verificarRefugioActivo, refugiosController.miRefugio)
+router.post("/mi-refugio", verificarToken, verificarRefugioActivo, upload.single("imagen"), refugiosController.guardarMiRefugio)
 
 module.exports = router

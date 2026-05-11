@@ -1,93 +1,66 @@
-# AdoptaYa - Guía de instalación
+# AdoptaYa
 
-## Tecnologías
-- **Frontend**: React + Vite + CSS plano
-- **Backend**: Node.js + Express + JWT + bcryptjs + Multer
-- **BBDD**: MySQL
+Plataforma web de adopción de animales. Proyecto de TFG de DAW2.
 
+## Requisitos previos
 
-## 1. Base de datos
+Antes de arrancar el proyecto necesitas tener instalado:
 
-1. Crea la BBDD `adoptaya` en phpMyAdmin.
-2. Importa `backend/base de datos/adoptaya.sql`.
-3. Ajusta user/password de MySQL en `backend/db.js` si hace falta.
+- **Node.js** (versión 18 o superior) → https://nodejs.org
+- **MySQL** o **MariaDB** con phpMyAdmin (por ejemplo, AMPPS)
 
+## Instalación (solo la primera vez)
 
-## 2. Imágenes de las mascotas ⚠ IMPORTANTE
+### 1. Instalar las dependencias
 
-- Las imágenes van en la carpeta `backend/img/`.
-- **Copia** ahí las 24 fotos originales (`rex.jpg`, `kiara.jpg`, etc.) desde tu ZIP original.
-- A partir de ese momento, cuando un refugio suba una mascota desde la web,
-  la foto se guardará **automáticamente** en esa misma carpeta con un nombre
-  único (timestamp + nombre original).
+Desde la carpeta raíz del proyecto, en una terminal:
 
-
-## 3. Backend
-
-```bash
+​```bash
 cd backend
 npm install
-npm run seed-admin    # solo la primera vez
-npm start             # servidor en http://localhost:3000
-```
 
-Admin por defecto: `admin@adoptaya.com` / `1234`
-
-
-## 4. Frontend
-
-En otra terminal:
-
-```bash
-cd front-end
+cd ../front-end
 npm install
-npm run dev           # http://localhost:5173
-```
+​```
 
-Copia también tu `logo.png` a `front-end/public/img/logo.png`.
+### 2. Configurar la base de datos
 
+- Abre phpMyAdmin desde AMPPS.
+- Crea una base de datos llamada `adoptaya`.
+- Importa el archivo `backend/base de datos/adoptaya.sql`.
+- Ejecuta también los parches que estén en la misma carpeta (por orden).
 
-## Cómo funciona la subida de imágenes
+## Arrancar el entorno de pruebas
 
-- El formulario de "Nueva mascota" tiene un `<input type="file">`.
-- El frontend manda los datos con **FormData** en vez de JSON (porque JSON no
-  puede llevar archivos).
-- En el backend, **Multer** procesa el archivo, lo guarda en `backend/img/`
-  con un nombre único (`1729598412345-perro.jpg`) y nos da el nombre del archivo.
-- En la tabla `mascotas` guardamos solo el **nombre** del archivo, no el archivo
-  entero (que ocuparía muchísimo más en la BBDD).
-- Express sirve la carpeta `img/` estáticamente: cualquier foto es accesible
-  en `http://localhost:3000/img/<nombre-archivo>`.
+Una vez instalado, hacer doble clic en:
 
-Restricciones puestas:
-- Solo se aceptan JPG, JPEG, PNG o WEBP.
-- Máximo 5 MB por imagen.
+​```
+start.bat
+​```
 
+Este script:
+- Levanta el backend (puerto **3000**) en una ventana de consola.
+- Levanta el frontend (puerto **5173**) en otra ventana.
+- Abre automáticamente el navegador en `http://localhost:5173`.
 
-## Roles
+## Apagar el entorno
 
-| BBDD         | Interfaz  | Puede                             |
-|--------------|-----------|-----------------------------------|
-| `adoptante`  | Usuario   | Ver + solicitar adopción          |
-| `protectora` | Refugio   | Ver + publicar mascotas con foto  |
-| `admin`      | -         | Todo                              |
+Dos formas:
 
+- **Manual**: cerrar las dos ventanas de consola (Backend y Frontend).
+- **Automático**: hacer doble clic en `stop.bat`.
 
-## Endpoints del backend
+## Cuentas de prueba
 
-| Método | Ruta                        | Acceso             |
-|--------|-----------------------------|--------------------|
-| POST   | `/login`                    | Público            |
-| POST   | `/register`                 | Público            |
-| GET    | `/mascotas`                 | Público            |
-| GET    | `/mascotas/:id`             | Público            |
-| POST   | `/mascotas`                 | Refugio o admin    |
-| POST   | `/mascotas/:id/adoptar`     | Usuario adoptante  |
+Para probar la aplicación, hay un usuario administrador creado por defecto:
 
+- **Email**: `admin@adoptaya.com`
+- **Contraseña**: `1234`
 
-## Seguridad
+## Stack técnico
 
-- Contraseñas hasheadas con **bcrypt** (10 rondas).
-- Autenticación con **JWT** (expiración de 7 días).
-- Token enviado en cabecera `Authorization: Bearer <token>`.
-- Validación de tipos de archivo y tamaño en Multer.
+- **Frontend**: React 18, Vite, CSS plano
+- **Backend**: Node.js, Express, MySQL (mysql2)
+- **Autenticación**: JWT con bcrypt
+- **Subida de archivos**: Multer
+- **Comunicación tiempo real**: polling cada 5 segundos

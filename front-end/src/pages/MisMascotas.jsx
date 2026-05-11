@@ -4,7 +4,7 @@ import Footer from "../components/Footer.jsx"
 import Toast from "../components/Toast.jsx"
 import Confirm from "../components/Confirm.jsx"
 
-const API = "http://localhost:3000"
+const API = import.meta.env.VITE_API_URL || ""
 
 export default function MisMascotas({ usuario, onLogout, navegar }) {
 

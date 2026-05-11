@@ -1,0 +1,70 @@
+# ============================================
+# Docker Compose - AdoptaYa
+# ============================================
+# Orquesta 3 servicios:
+#   - mysql: base de datos
+#   - backend: API Node.js + Express
+#   - frontend: app React servida por Nginx
+# ============================================
+
+services:
+
+  # ---- MySQL ----
+  mysql:
+    image: mysql:8.0
+    container_name: adoptaya-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: adoptaya
+      MYSQL_USER: adrian
+      MYSQL_PASSWORD: mysql
+    volumes:
+      # carga el SQL de inicio (solo la primera vez)
+      - ./backend/base de datos/adoptaya.sql:/docker-entrypoint-initdb.d/01-adoptaya.sql:ro
+      # persistir los datos para que no se pierdan entre reinicios
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  # ---- BACKEND ----
+  backend:
+    build: ./backend
+    container_name: adoptaya-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_USER: adrian
+      DB_PASSWORD: mysql
+      DB_NAME: adoptaya
+      PORT: 3000
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      # persistir las imágenes subidas
+      - ./backend/img:/app/img
+
+
+  # ---- FRONTEND ----
+  frontend:
+    build:
+      context: ./front-end
+      args:
+        # URL del backend que se incrustará en el build de Vite.
+        # Como Nginx hace de proxy, basta con una ruta relativa.
+        VITE_API_URL: ""
+    container_name: adoptaya-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+
+volumes:
+  mysql-data:

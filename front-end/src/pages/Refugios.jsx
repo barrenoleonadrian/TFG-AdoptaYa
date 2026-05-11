@@ -3,7 +3,7 @@ import Navbar from "../components/Navbar.jsx"
 import Footer from "../components/Footer.jsx"
 import { useReveal } from "../hooks/useReveal.js"
 
-const API = "http://localhost:3000"
+const API = import.meta.env.VITE_API_URL || ""
 
 
 // saca la URL de la imagen de un refugio, o un avatar con su inicial si no tiene

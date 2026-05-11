@@ -3,7 +3,7 @@ import Navbar from "../components/Navbar.jsx"
 import Footer from "../components/Footer.jsx"
 import Toast from "../components/Toast.jsx"
 
-const API = "http://localhost:3000"
+const API = import.meta.env.VITE_API_URL || ""
 
 
 function getImagenURL(m){

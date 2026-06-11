@@ -33,7 +33,6 @@ export default function MisSolicitudes({ usuario, onLogout, navegar }) {
     }
 
 
-    // texto bonito para el estado (en lugar del valor crudo de la BBDD)
     function textoEstado(estado){
         const textos = {
             "pendiente": "Pendiente de revisar",
@@ -45,7 +44,6 @@ export default function MisSolicitudes({ usuario, onLogout, navegar }) {
     }
 
 
-    // explicación pequeña según el estado
     function explicacionEstado(estado){
         const explicaciones = {
             "pendiente": "El refugio aún no ha revisado tu solicitud.",
@@ -58,72 +56,84 @@ export default function MisSolicitudes({ usuario, onLogout, navegar }) {
 
 
     return (
-        <div>
-
+        <>
             <Navbar usuario={usuario} onLogout={onLogout} navegar={navegar} activo="mis-solicitudes" />
 
-            <section className="seccion" style={{paddingTop: "64px"}}>
-                <div className="contenedor">
+            <main id="contenido-principal" tabIndex="-1">
 
-                    <div className="seccion-cabecera" style={{textAlign: "left", maxWidth: "100%", marginBottom: "32px"}}>
-                        <span className="eyebrow">Mi cuenta</span>
-                        <h2>Mis solicitudes</h2>
-                        <p>Aquí puedes ver el estado de las solicitudes de adopción que has enviado.</p>
-                    </div>
+                <section className="seccion" style={{paddingTop: "64px"}} aria-labelledby="mis-solicitudes-titulo">
+                    <div className="contenedor">
+
+                        <header className="seccion-cabecera" style={{textAlign: "left", maxWidth: "100%", marginBottom: "32px"}}>
+                            <span className="eyebrow">Mi cuenta</span>
+                            <h1 id="mis-solicitudes-titulo">Mis solicitudes</h1>
+                            <p>Aquí puedes ver el estado de las solicitudes de adopción que has enviado.</p>
+                        </header>
 
 
-                    {solicitudes.length === 0 ? (
-                        <div className="vacio">
-                            <p>Aún no has enviado ninguna solicitud de adopción.</p>
-                            <button onClick={() => navegar("adoptar")} className="btn btn-acento" style={{marginTop: "16px"}}>
-                                Ver mascotas en adopción
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="solicitudes-lista">
+                        {solicitudes.length === 0 ? (
+                            <div className="vacio" role="status">
+                                <p>Aún no has enviado ninguna solicitud de adopción.</p>
+                                <button
+                                    type="button"
+                                    onClick={() => navegar("adoptar")}
+                                    className="btn btn-acento"
+                                    style={{marginTop: "16px"}}>
+                                    Ver mascotas en adopción
+                                </button>
+                            </div>
+                        ) : (
+                            <ul className="solicitudes-lista" aria-label="Lista de solicitudes enviadas">
 
-                            {solicitudes.map((s) => (
-                                <div key={s.id} className="solicitud-tarjeta">
+                                {solicitudes.map((s) => (
+                                    <li key={s.id}>
+                                        <article className="solicitud-tarjeta" aria-labelledby={`solicitud-${s.id}-titulo`}>
 
-                                    <div className="solicitud-cabecera">
-                                        <div style={{display: "flex", gap: "16px", alignItems: "center"}}>
-                                            <img
-                                                src={s.mascota_imagen
-                                                    ? API + "/img/" + s.mascota_imagen
-                                                    : API + "/img/" + s.mascota_nombre.toLowerCase() + ".jpg"}
-                                                alt={s.mascota_nombre}
-                                                style={{width: "64px", height: "64px", borderRadius: "8px", objectFit: "cover"}}
-                                            />
-                                            <div>
-                                                <h4>{s.mascota_nombre}</h4>
-                                                <p className="solicitud-meta">
-                                                    Refugio: <strong>{s.refugio_nombre}</strong>
-                                                    {" · "}
-                                                    Solicitada el {new Date(s.fecha).toLocaleDateString("es-ES")}
-                                                </p>
+                                            <div className="solicitud-cabecera">
+                                                <div style={{display: "flex", gap: "16px", alignItems: "center"}}>
+                                                    <img
+                                                        src={s.mascota_imagen
+                                                            ? API + "/img/" + s.mascota_imagen
+                                                            : API + "/img/" + s.mascota_nombre.toLowerCase() + ".jpg"}
+                                                        alt={`Foto de ${s.mascota_nombre}`}
+                                                        style={{width: "64px", height: "64px", borderRadius: "8px", objectFit: "cover"}}
+                                                    />
+                                                    <div>
+                                                        <h2 id={`solicitud-${s.id}-titulo`} style={{fontSize: "16px", margin: "0 0 4px 0"}}>
+                                                            {s.mascota_nombre}
+                                                        </h2>
+                                                        <p className="solicitud-meta">
+                                                            Refugio: <strong>{s.refugio_nombre}</strong>
+                                                            {" · "}
+                                                            Solicitada el <time dateTime={s.fecha}>
+                                                                {new Date(s.fecha).toLocaleDateString("es-ES")}
+                                                            </time>
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <span className={"badge badge-" + s.estado} aria-label={`Estado: ${textoEstado(s.estado)}`}>
+                                                    {textoEstado(s.estado)}
+                                                </span>
                                             </div>
-                                        </div>
 
-                                        <span className={"badge badge-" + s.estado}>
-                                            {textoEstado(s.estado)}
-                                        </span>
-                                    </div>
+                                            <p style={{fontSize: "14px", color: "var(--gris-700)", margin: "12px 0 0 0"}}>
+                                                {explicacionEstado(s.estado)}
+                                            </p>
 
-                                    <p style={{fontSize: "14px", color: "var(--gris-700)", margin: "12px 0 0 0"}}>
-                                        {explicacionEstado(s.estado)}
-                                    </p>
+                                        </article>
+                                    </li>
+                                ))}
 
-                                </div>
-                            ))}
+                            </ul>
+                        )}
 
-                        </div>
-                    )}
+                    </div>
+                </section>
 
-                </div>
-            </section>
+            </main>
 
             <Footer navegar={navegar} />
-
-        </div>
+        </>
     )
 }

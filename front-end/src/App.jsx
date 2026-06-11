@@ -17,20 +17,15 @@ import Mensajes from "./pages/Mensajes.jsx"
 
 export default function App() {
 
-    // lee la ruta inicial del hash (ej: "#adoptar" → "adoptar")
     const [ruta, setRuta] = useState(window.location.hash.replace("#", "") || "home")
-
-    // parámetro extra (usado sobre todo para el id de la mascota)
     const [param, setParam] = useState(null)
 
-    // usuario logueado (se guarda en localStorage)
     const [usuario, setUsuario] = useState(() => {
         const guardado = localStorage.getItem("usuario")
         return guardado ? JSON.parse(guardado) : null
     })
 
 
-    // sincroniza el hash con el estado cuando el usuario navega
     useEffect(() => {
         function handleHash(){
             const hash = window.location.hash.replace("#", "")
@@ -48,7 +43,6 @@ export default function App() {
     }, [])
 
 
-    // función para navegar desde cualquier componente
     function navegar(nuevaRuta, nuevoParam){
         if(nuevoParam){
             window.location.hash = nuevaRuta + "/" + nuevoParam
@@ -58,7 +52,6 @@ export default function App() {
     }
 
 
-    // login: guarda usuario y token
     function hacerLogin(data){
         localStorage.setItem("usuario", JSON.stringify(data.usuario))
         localStorage.setItem("token", data.token)
@@ -66,7 +59,6 @@ export default function App() {
     }
 
 
-    // cierra sesión
     function hacerLogout(){
         localStorage.removeItem("usuario")
         localStorage.removeItem("token")
@@ -75,7 +67,6 @@ export default function App() {
     }
 
 
-    // decide qué página mostrar y la guarda en una variable
     let pagina
 
     if(ruta === "adoptar"){
@@ -88,7 +79,6 @@ export default function App() {
         pagina = <Login onLogin={hacerLogin} navegar={navegar} />
     }
     else if(ruta === "nueva-mascota"){
-        // si no eres refugio, te mandamos al home
         if(!usuario || usuario.tipo !== "protectora"){
             navegar("home")
             return null
@@ -96,7 +86,6 @@ export default function App() {
         pagina = <NuevaMascota usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
     else if(ruta === "admin"){
-        // solo el admin puede entrar
         if(!usuario || usuario.tipo !== "admin"){
             navegar("home")
             return null
@@ -107,7 +96,6 @@ export default function App() {
         pagina = <Refugios usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
     else if(ruta === "mi-refugio"){
-        // solo los refugios pueden editar su perfil
         if(!usuario || usuario.tipo !== "protectora"){
             navegar("home")
             return null
@@ -115,7 +103,6 @@ export default function App() {
         pagina = <MiRefugio usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
     else if(ruta === "mis-mascotas"){
-        // solo los refugios pueden ver sus mascotas y solicitudes
         if(!usuario || usuario.tipo !== "protectora"){
             navegar("home")
             return null
@@ -123,7 +110,6 @@ export default function App() {
         pagina = <MisMascotas usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
     else if(ruta === "mis-solicitudes"){
-        // solo los adoptantes pueden ver sus solicitudes
         if(!usuario || usuario.tipo !== "adoptante"){
             navegar("home")
             return null
@@ -131,14 +117,11 @@ export default function App() {
         pagina = <MisSolicitudes usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
     else if(ruta === "mensajes"){
-        // solo los usuarios logueados pueden ver mensajes
         if(!usuario){
             navegar("login")
             return null
         }
 
-        // si venimos de una mascota con un refugio para contactar,
-        // lo recogemos del sessionStorage
         let contactarCon = null
         const guardado = sessionStorage.getItem("contactarCon")
         if(guardado){
@@ -149,12 +132,14 @@ export default function App() {
         pagina = <Mensajes usuario={usuario} onLogout={hacerLogout} navegar={navegar} contactarCon={contactarCon} />
     }
     else {
-        // por defecto → home
         pagina = <Home usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
 
 
-    // devolvemos la página seleccionada
+    // devolvemos la página seleccionada.
+    // Cada página renderiza su propio Navbar y Footer.
+    // El skip link del Navbar enlaza a #contenido-principal,
+    // que está en el <main> de cada página.
     return pagina
 
 }

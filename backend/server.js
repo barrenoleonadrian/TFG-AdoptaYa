@@ -2,9 +2,14 @@
 // Configura Express, los middlewares globales y registra todas las rutas
 // de la API REST. El servidor arranca en el puerto 3000.
 
+require('dotenv').config()
 const express = require("express")
 const cors = require("cors")
 const app = express()
+app.set('trust proxy', 1)
+const helmet = require('helmet')
+const { limiteGeneral } = require('./middleware/rateLimit')
+
 
 // importamos los routers organizados por funcionalidad
 const mascotasRoutes = require("./routes/mascotasRoutes")
@@ -14,8 +19,15 @@ const refugiosRoutes = require("./routes/refugiosRoutes")
 const mensajesRoutes = require("./routes/mensajesRoutes")
 const misMascotasRoutes = require("./routes/misMascotasRoutes")
 
+app.use(helmet())
+app.use(limiteGeneral)
 // CORS permite que el frontend (puerto 5173) pueda llamar al backend (3000)
-app.use(cors())
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}))
 // para que Express lea automáticamente los body JSON de las peticiones
 app.use(express.json())
 

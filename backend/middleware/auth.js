@@ -5,7 +5,7 @@
 const jwt = require("jsonwebtoken")
 const db = require("../db")
 
-const SECRET = "adoptaya_secret"
+const SECRET = process.env.JWT_SECRET
 
 
 // Comprueba que la petición trae un token JWT válido.

@@ -5,6 +5,7 @@ const path = require("path")
 const router = express.Router()
 const mascotasController = require("../controllers/mascotasController")
 const {verificarToken, verificarRefugioActivo} = require("../middleware/auth")
+const {validarMascota} = require("../middleware/validaciones")
 
 
 // ====== CONFIGURACIÓN DE MULTER ======
@@ -60,11 +61,13 @@ router.get("/mascotas/:id", mascotasController.obtenerMascota)
 // crear mascota: requiere token + procesar imagen con multer.
 // upload.single("imagen") lee el campo "imagen" del FormData y lo guarda.
 // solo refugios verificados pueden publicar
+// validarMascota comprueba los campos del formulario después de Multer
 router.post(
     "/mascotas",
     verificarToken,
     verificarRefugioActivo,
     upload.single("imagen"),
+    validarMascota,
     mascotasController.crearMascota
 )
 

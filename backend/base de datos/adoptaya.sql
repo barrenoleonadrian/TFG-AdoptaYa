@@ -1,13 +1,16 @@
 -- ============================================
 -- AdoptaYa - SQL de inicialización
 -- ============================================
--- Crea todas las tablas del proyecto y un usuario admin por defecto.
--- Este archivo lo carga Docker automáticamente al levantar el contenedor
--- de MySQL por primera vez.
+-- Estructura normalizada sin datos duplicados, con claves foráneas
+-- para garantizar la integridad referencial.
 -- ============================================
+
 
 -- ============================================
 -- TABLA: usuarios
+-- ============================================
+-- Datos comunes a TODOS los actores (adoptante, refugio, admin).
+-- El campo `tipo` diferencia el rol.
 -- ============================================
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -15,7 +18,6 @@ CREATE TABLE IF NOT EXISTS usuarios (
     email VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     tipo ENUM('adoptante', 'protectora', 'admin') NOT NULL DEFAULT 'adoptante',
-    cif VARCHAR(20) NULL,
     verificado BOOLEAN DEFAULT FALSE,
     telefono VARCHAR(20) NULL,
     ciudad VARCHAR(100) NULL,
@@ -26,16 +28,18 @@ CREATE TABLE IF NOT EXISTS usuarios (
 -- ============================================
 -- TABLA: refugios
 -- ============================================
+-- Datos ESPECÍFICOS del refugio. Los datos comunes (nombre, email,
+-- telefono, ciudad) están en `usuarios` y se obtienen con JOIN.
+-- Cada refugio está vinculado a una cuenta de usuario mediante
+-- una clave foránea con borrado en cascada.
+-- ============================================
 CREATE TABLE IF NOT EXISTS refugios (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    usuario_id INT NULL,
-    nombre VARCHAR(150) NOT NULL,
-    email VARCHAR(150) NULL,
-    telefono VARCHAR(20) NULL,
-    ciudad VARCHAR(100) NULL,
+    usuario_id INT NOT NULL UNIQUE,
+    cif VARCHAR(20) NOT NULL,
     descripcion TEXT NULL,
     imagen VARCHAR(255) NULL,
-    INDEX idx_usuario_id (usuario_id)
+    CONSTRAINT fk_refugios_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 
@@ -55,7 +59,7 @@ CREATE TABLE IF NOT EXISTS mascotas (
     imagen VARCHAR(255) NULL,
     estado ENUM('disponible', 'pendiente', 'reservada', 'adoptado') DEFAULT 'disponible',
     fecha_publicacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_usuario_id (usuario_id)
+    CONSTRAINT fk_mascotas_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 
@@ -65,6 +69,7 @@ CREATE TABLE IF NOT EXISTS mascotas (
 CREATE TABLE IF NOT EXISTS solicitudes_adopcion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_id INT NOT NULL,
+    mascota_id INT NOT NULL,
     nombre_solicitante VARCHAR(100) NULL,
     mayor_edad BOOLEAN NULL,
     direccion VARCHAR(255) NULL,
@@ -74,12 +79,11 @@ CREATE TABLE IF NOT EXISTS solicitudes_adopcion (
     otras_mascotas VARCHAR(255) NULL,
     motivo TEXT NULL,
     situacion_laboral VARCHAR(30) NULL,
-    mascota_id INT NOT NULL,
     mensaje TEXT NULL,
     estado ENUM('pendiente', 'en_revision', 'aprobada', 'rechazada') DEFAULT 'pendiente',
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_usuario_id (usuario_id),
-    INDEX idx_mascota_id (mascota_id)
+    CONSTRAINT fk_solicitudes_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_solicitudes_mascota FOREIGN KEY (mascota_id) REFERENCES mascotas(id) ON DELETE CASCADE
 );
 
 
@@ -93,17 +97,15 @@ CREATE TABLE IF NOT EXISTS mensajes (
     texto TEXT NOT NULL,
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
     leido BOOLEAN DEFAULT FALSE,
-    INDEX idx_emisor (emisor_id),
-    INDEX idx_receptor (receptor_id)
+    CONSTRAINT fk_mensajes_emisor FOREIGN KEY (emisor_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mensajes_receptor FOREIGN KEY (receptor_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 
 -- ============================================
 -- USUARIO ADMIN POR DEFECTO
--- ============================================
 -- Email: admin@adoptaya.com
 -- Contraseña: 1234
--- (El hash es el resultado de bcrypt sobre "1234")
 -- ============================================
 INSERT INTO usuarios (nombre, email, password, tipo, verificado)
 VALUES (

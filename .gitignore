@@ -1,5 +1,6 @@
 # Dependencias npm
-node_modules/
+node_modules
+img/
 
 # Archivos de build
 dist/

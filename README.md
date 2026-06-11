@@ -1,4 +1,4 @@
-# AdoptaYa 🐾
+# AdoptaYa 
 
 Plataforma web para la adopción responsable de animales. Centraliza la oferta de refugios verificados y permite gestionar todo el proceso de adopción desde un único punto.
 
@@ -7,7 +7,7 @@ Adrián Barreno León - Curso 2025/2026
 
 ---
 
-## 📋 Tabla de contenidos
+##  Tabla de contenidos
 
 - [Descripción](#descripción)
 - [Funcionalidades](#funcionalidades)
@@ -23,7 +23,7 @@ Adrián Barreno León - Curso 2025/2026
 
 ---
 
-## 📖 Descripción
+## Descripción
 
 AdoptaYa resuelve tres problemas reales del proceso de adopción animal:
 
@@ -35,7 +35,7 @@ La plataforma reúne en un único lugar mascotas y refugios verificados, con un 
 
 ---
 
-## ⚡ Funcionalidades
+##  Funcionalidades
 
 - **Catálogo público** de mascotas con filtros por tipo, ciudad y nombre.
 - **Sistema de adopción realista** con formulario detallado y máquina de estados (`pendiente → en_revision → aprobada / rechazada`).
@@ -48,7 +48,7 @@ La plataforma reúne en un único lugar mascotas y refugios verificados, con un 
 
 ---
 
-## 🛠 Tecnologías
+##  Tecnologías
 
 ### Frontend
 - **React 18** con Hooks
@@ -73,7 +73,7 @@ La plataforma reúne en un único lugar mascotas y refugios verificados, con un 
 
 ---
 
-## 🏗 Arquitectura
+##  Arquitectura
 
 Arquitectura cliente-servidor REST con tres capas independientes:
 
@@ -87,7 +87,7 @@ El despliegue consta de tres contenedores Docker orquestados con Docker Compose.
 
 ---
 
-## ✅ Requisitos previos
+##  Requisitos previos
 
 - [Docker](https://www.docker.com/get-started/) y Docker Compose
 - Git
@@ -95,7 +95,7 @@ El despliegue consta de tres contenedores Docker orquestados con Docker Compose.
 
 ---
 
-## 🚀 Instalación
+##  Instalación
 
 Clona el repositorio:
 
@@ -116,7 +116,7 @@ La aplicación estará disponible en: **http://localhost**
 
 ---
 
-## 📁 Estructura del proyecto
+##  Estructura del proyecto
 TFG-AdoptaYa/
 ├── backend/                    # API Node.js + Express
 │   ├── controllers/            # Lógica de negocio por dominio
@@ -135,7 +135,7 @@ TFG-AdoptaYa/
 
 ---
 
-## 🔐 Variables de entorno
+##  Variables de entorno
 
 Crea un archivo `backend/.env` con el siguiente contenido:
 
@@ -149,11 +149,11 @@ PORT=3000
 FRONTEND_URL=http://localhost
 ```
 
-⚠️ **Nunca subas este archivo al repositorio.** Está incluido en `.gitignore`.
+ **Nunca subas este archivo al repositorio.** Está incluido en `.gitignore`.
 
 ---
 
-## 💻 Uso
+##  Uso
 
 Una vez levantados los contenedores, accede a **http://localhost**.
 
@@ -172,7 +172,7 @@ Una vez levantados los contenedores, accede a **http://localhost**.
 
 ---
 
-## 🛡 Seguridad
+##  Seguridad
 
 El proyecto implementa varias capas de seguridad:
 
@@ -187,13 +187,13 @@ El proyecto implementa varias capas de seguridad:
 
 ---
 
-## 📄 Licencia
+##  Licencia
 
 Proyecto académico desarrollado como Trabajo Fin de Grado en el ciclo de Desarrollo de Aplicaciones Web (DAW). Uso educativo.
 
 ---
 
-## 👤 Autor
+##  Autor
 
 **Adrián Barreno León**
 TFG DAW2 - Curso 2025/2026

@@ -3,13 +3,24 @@ const db = require("../db")
 
 // ====== USUARIOS ======
 
-// Listar todos los usuarios
+// Listar todos los usuarios. Para los refugios traemos también el CIF
+// haciendo LEFT JOIN con la tabla `refugios`. Los adoptantes y admins
+// no tienen fila en `refugios`, por eso es LEFT JOIN (cif = NULL para ellos).
 exports.listarUsuarios = (req, res) => {
 
-    const sql = "SELECT id, nombre, email, tipo, cif, verificado, telefono, ciudad, fecha_registro FROM usuarios ORDER BY id DESC"
+    const sql = `
+        SELECT
+            u.id, u.nombre, u.email, u.tipo, u.verificado,
+            u.telefono, u.ciudad, u.fecha_registro,
+            r.cif
+        FROM usuarios u
+        LEFT JOIN refugios r ON r.usuario_id = u.id
+        ORDER BY u.id DESC
+    `
 
     db.query(sql, (err, result) => {
         if(err){
+            console.log("ERROR SQL listarUsuarios:", err)
             return res.status(500).json({mensaje:"Error del servidor"})
         }
         res.json(result)
@@ -66,7 +77,9 @@ exports.cambiarRolUsuario = (req, res) => {
 }
 
 
-// Eliminar usuario
+// Eliminar usuario.
+// Las claves foráneas con ON DELETE CASCADE se encargan de borrar también
+// sus mascotas, solicitudes, mensajes y fila de refugio (si la tuviera).
 exports.eliminarUsuario = (req, res) => {
 
     const id = req.params.id
@@ -80,8 +93,8 @@ exports.eliminarUsuario = (req, res) => {
 
     db.query(sql, [id], (err) => {
         if(err){
-            // si hay mascotas o solicitudes ligadas, MySQL dará error por la foreign key
-            return res.status(500).json({mensaje:"No se puede borrar: el usuario tiene mascotas o solicitudes asociadas"})
+            console.log("ERROR SQL eliminarUsuario:", err)
+            return res.status(500).json({mensaje:"Error al eliminar el usuario"})
         }
         res.json({mensaje:"Usuario eliminado"})
     })
@@ -119,7 +132,7 @@ exports.eliminarMascota = (req, res) => {
 
     db.query(sql, [id], (err) => {
         if(err){
-            return res.status(500).json({mensaje:"No se puede borrar: la mascota tiene solicitudes asociadas"})
+            return res.status(500).json({mensaje:"No se puede borrar la mascota"})
         }
         res.json({mensaje:"Mascota eliminada"})
     })

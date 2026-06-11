@@ -76,6 +76,8 @@ La plataforma reúne en un único lugar mascotas y refugios verificados, con un 
 ## 🏗 Arquitectura
 
 Arquitectura cliente-servidor REST con tres capas independientes:
+
+
 ┌──────────────┐  JSON  ┌──────────────┐  SQL  ┌──────────────┐
 │   FRONTEND   │ ─────> │   BACKEND    │ ────> │    MYSQL     │
 │  React + Vite│        │ Node+Express │       │     8.0      │

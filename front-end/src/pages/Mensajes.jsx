@@ -8,37 +8,24 @@ const API = import.meta.env.VITE_API_URL || ""
 export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
 
     const [conversaciones, setConversaciones] = useState([])
-
-    // id del otro usuario con el que estoy hablando ahora
     const [activo, setActivo] = useState(null)
-
-    // datos básicos del otro usuario (nombre)
     const [activoNombre, setActivoNombre] = useState("")
-
-    // mensajes de la conversación actual
     const [mensajes, setMensajes] = useState([])
-
-    // texto del campo de escribir
     const [texto, setTexto] = useState("")
 
-    // referencia al final del chat para hacer scroll automático
     const finalChat = useRef(null)
 
-    // toast
     const [toast, setToast] = useState(null)
     function mostrar(mensajeToast, tipo = "ok"){
         setToast({ texto: mensajeToast, tipo })
     }
 
 
-    // al cargar, traemos las conversaciones
     useEffect(() => {
         cargarConversaciones()
     }, [])
 
 
-    // si venimos de la página de mascota con un refugio para contactar,
-    // abrimos directamente esa conversación
     useEffect(() => {
         if(contactarCon){
             setActivo(contactarCon.id)
@@ -47,15 +34,11 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
     }, [contactarCon])
 
 
-    // cuando cambia la conversación activa, traemos sus mensajes
-    // y configuramos el polling cada 5 segundos
     useEffect(() => {
 
         if(!activo) return
 
         cargarMensajes()
-
-        // polling: cada 5 segundos pedimos los mensajes nuevos
         const intervalo = setInterval(cargarMensajes, 5000)
 
         return () => clearInterval(intervalo)
@@ -63,7 +46,6 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
     }, [activo])
 
 
-    // cuando llegan mensajes nuevos, hacemos scroll al final
     useEffect(() => {
         if(finalChat.current){
             finalChat.current.scrollIntoView({behavior: "smooth"})
@@ -99,8 +81,9 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
     }
 
 
-    async function enviar(){
+    async function enviar(e){
 
+        if(e) e.preventDefault()
         if(!texto.trim()) return
 
         try{
@@ -120,7 +103,7 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
             if(res.ok){
                 setTexto("")
                 cargarMensajes()
-                cargarConversaciones()  // para actualizar el último mensaje
+                cargarConversaciones()
             }
         }catch(err){
             mostrar("Error al enviar el mensaje", "error")
@@ -135,7 +118,7 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
     }
 
 
-    // permite mandar el mensaje con Enter
+    // permite mandar con Enter, salto de línea con Shift+Enter
     function manejarTecla(e){
         if(e.key === "Enter" && !e.shiftKey){
             e.preventDefault()
@@ -144,7 +127,6 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
     }
 
 
-    // formatea la fecha del último mensaje (hoy → hora, otros días → fecha)
     function formatearFecha(fecha){
         if(!fecha) return ""
         const f = new Date(fecha)
@@ -157,128 +139,150 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
 
 
     return (
-        <div>
-
+        <>
             <Navbar usuario={usuario} onLogout={onLogout} navegar={navegar} activo="mensajes" />
 
-            <section className="seccion" style={{paddingTop: "64px"}}>
-                <div className="contenedor">
+            <main id="contenido-principal" tabIndex="-1">
 
-                    <div className="seccion-cabecera" style={{textAlign: "left", maxWidth: "100%", marginBottom: "32px"}}>
-                        <span className="eyebrow">Mensajes</span>
-                        <h2>Tus conversaciones</h2>
-                        <p>Habla directamente con los refugios o adoptantes.</p>
-                    </div>
+                <section className="seccion" style={{paddingTop: "64px"}} aria-labelledby="mensajes-titulo">
+                    <div className="contenedor">
 
-                    <div className="chat-layout">
+                        <header className="seccion-cabecera" style={{textAlign: "left", maxWidth: "100%", marginBottom: "32px"}}>
+                            <span className="eyebrow">Mensajes</span>
+                            <h1 id="mensajes-titulo">Tus conversaciones</h1>
+                            <p>Habla directamente con los refugios o adoptantes.</p>
+                        </header>
 
-                        {/* LISTA DE CONVERSACIONES */}
-                        <div className="chat-lista">
+                        <div className="chat-layout">
 
-                            {conversaciones.length === 0 && !activo ? (
-                                <div className="chat-vacio">
-                                    <p>Aún no tienes conversaciones.</p>
-                                    <p style={{fontSize: "13px", marginTop: "8px"}}>
-                                        Contacta con un refugio desde la ficha de una mascota.
+                            {/* LISTA DE CONVERSACIONES */}
+                            <nav className="chat-lista" aria-label="Lista de conversaciones">
+
+                                {conversaciones.length === 0 && !activo ? (
+                                    <div className="chat-vacio" role="status">
+                                        <p>Aún no tienes conversaciones.</p>
+                                        <p style={{fontSize: "13px", marginTop: "8px"}}>
+                                            Contacta con un refugio desde la ficha de una mascota.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <ul style={{listStyle: "none", padding: 0, margin: 0}}>
+
+                                        {activo && !conversaciones.find((c) => c.id === activo) && (
+                                            <li>
+                                                <div className="chat-item activo" aria-current="true">
+                                                    <div className="chat-item-avatar" aria-hidden="true">
+                                                        {activoNombre.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="chat-item-info">
+                                                        <h2 style={{fontSize: "14px", margin: "0 0 2px 0"}}>{activoNombre}</h2>
+                                                        <p>Nueva conversación</p>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        )}
+
+                                        {conversaciones.map((c) => (
+                                            <li key={c.id}>
+                                                <button
+                                                    type="button"
+                                                    className={"chat-item " + (activo === c.id ? "activo" : "")}
+                                                    onClick={() => abrirConversacion(c)}
+                                                    aria-current={activo === c.id ? "true" : undefined}
+                                                    aria-label={`Conversación con ${c.nombre}${c.sin_leer > 0 ? `, ${c.sin_leer} mensajes sin leer` : ""}`}>
+                                                    <div className="chat-item-avatar" aria-hidden="true">
+                                                        {c.nombre.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="chat-item-info">
+                                                        <h2 style={{fontSize: "14px", margin: "0 0 2px 0"}}>{c.nombre}</h2>
+                                                        <p>{c.ultimo_mensaje || "—"}</p>
+                                                    </div>
+                                                    <div className="chat-item-meta">
+                                                        <span className="chat-item-fecha">{formatearFecha(c.ultima_fecha)}</span>
+                                                        {c.sin_leer > 0 && (
+                                                            <span className="chat-item-badge" aria-hidden="true">{c.sin_leer}</span>
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+
+                            </nav>
+
+                            {/* CHAT ACTIVO */}
+                            <div className="chat-conversacion">
+
+                                {!activo ? (
+                                    <p className="chat-vacio chat-vacio-grande" role="status">
+                                        Selecciona una conversación
                                     </p>
-                                </div>
-                            ) : (
-                                <>
-                                    {/* si abrimos un chat nuevo que aún no está en la lista, lo añadimos arriba */}
-                                    {activo && !conversaciones.find((c) => c.id === activo) && (
-                                        <div className="chat-item activo">
-                                            <div className="chat-item-avatar">
+                                ) : (
+                                    <>
+                                        <header className="chat-cabecera">
+                                            <div className="chat-item-avatar" aria-hidden="true">
                                                 {activoNombre.charAt(0).toUpperCase()}
                                             </div>
-                                            <div className="chat-item-info">
-                                                <h4>{activoNombre}</h4>
-                                                <p>Nueva conversación</p>
-                                            </div>
-                                        </div>
-                                    )}
+                                            <h2 style={{fontSize: "16px", margin: 0}}>{activoNombre}</h2>
+                                        </header>
 
-                                    {conversaciones.map((c) => (
                                         <div
-                                            key={c.id}
-                                            className={"chat-item " + (activo === c.id ? "activo" : "")}
-                                            onClick={() => abrirConversacion(c)}
-                                        >
-                                            <div className="chat-item-avatar">
-                                                {c.nombre.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className="chat-item-info">
-                                                <h4>{c.nombre}</h4>
-                                                <p>{c.ultimo_mensaje || "—"}</p>
-                                            </div>
-                                            <div className="chat-item-meta">
-                                                <span className="chat-item-fecha">{formatearFecha(c.ultima_fecha)}</span>
-                                                {c.sin_leer > 0 && (
-                                                    <span className="chat-item-badge">{c.sin_leer}</span>
-                                                )}
-                                            </div>
+                                            className="chat-mensajes"
+                                            role="log"
+                                            aria-live="polite"
+                                            aria-label="Mensajes de la conversación">
+                                            {mensajes.length === 0 ? (
+                                                <p style={{textAlign: "center", color: "var(--gris-500)", marginTop: "40px"}}>
+                                                    Envía el primer mensaje para empezar la conversación.
+                                                </p>
+                                            ) : (
+                                                mensajes.map((m) => (
+                                                    <div
+                                                        key={m.id}
+                                                        className={"mensaje " + (m.emisor_id === usuario.id ? "mensaje-mio" : "mensaje-otro")}>
+                                                        <p>{m.texto}</p>
+                                                        <time
+                                                            dateTime={m.fecha}
+                                                            className="mensaje-hora">
+                                                            {formatearFecha(m.fecha)}
+                                                        </time>
+                                                    </div>
+                                                ))
+                                            )}
+                                            <div ref={finalChat}></div>
                                         </div>
-                                    ))}
-                                </>
-                            )}
 
-                        </div>
+                                        <form className="chat-input" onSubmit={enviar}>
+                                            <label htmlFor="chat-texto" className="sr-only">
+                                                Escribe un mensaje
+                                            </label>
+                                            <textarea
+                                                id="chat-texto"
+                                                value={texto}
+                                                onChange={(e) => setTexto(e.target.value)}
+                                                onKeyDown={manejarTecla}
+                                                placeholder="Escribe un mensaje..."
+                                                rows="1"
+                                                aria-describedby="chat-ayuda" />
+                                            <span id="chat-ayuda" className="sr-only">
+                                                Pulsa Enter para enviar, o Mayúsculas más Enter para hacer un salto de línea.
+                                            </span>
+                                            <button type="submit" className="btn btn-acento">
+                                                Enviar
+                                            </button>
+                                        </form>
+                                    </>
+                                )}
 
-                        {/* CHAT ACTIVO */}
-                        <div className="chat-conversacion">
-
-                            {!activo ? (
-                                <div className="chat-vacio chat-vacio-grande">
-                                    <p>Selecciona una conversación</p>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="chat-cabecera">
-                                        <div className="chat-item-avatar">
-                                            {activoNombre.charAt(0).toUpperCase()}
-                                        </div>
-                                        <h3>{activoNombre}</h3>
-                                    </div>
-
-                                    <div className="chat-mensajes">
-                                        {mensajes.length === 0 ? (
-                                            <p style={{textAlign: "center", color: "var(--gris-500)", marginTop: "40px"}}>
-                                                Envía el primer mensaje para empezar la conversación.
-                                            </p>
-                                        ) : (
-                                            mensajes.map((m) => (
-                                                <div
-                                                    key={m.id}
-                                                    className={"mensaje " + (m.emisor_id === usuario.id ? "mensaje-mio" : "mensaje-otro")}
-                                                >
-                                                    <p>{m.texto}</p>
-                                                    <span className="mensaje-hora">{formatearFecha(m.fecha)}</span>
-                                                </div>
-                                            ))
-                                        )}
-                                        <div ref={finalChat}></div>
-                                    </div>
-
-                                    <div className="chat-input">
-                                        <textarea
-                                            value={texto}
-                                            onChange={(e) => setTexto(e.target.value)}
-                                            onKeyDown={manejarTecla}
-                                            placeholder="Escribe un mensaje..."
-                                            rows="1"
-                                        />
-                                        <button onClick={enviar} className="btn btn-acento">
-                                            Enviar
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                            </div>
 
                         </div>
 
                     </div>
+                </section>
 
-                </div>
-            </section>
+            </main>
 
             <Footer navegar={navegar} />
 
@@ -289,7 +293,6 @@ export default function Mensajes({ usuario, onLogout, navegar, contactarCon }) {
                     onCerrar={() => setToast(null)}
                 />
             )}
-
-        </div>
+        </>
     )
 }

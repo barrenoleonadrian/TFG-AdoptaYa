@@ -1825,3 +1825,17 @@ label[data-required]::after {
     width: 100%;
     cursor: pointer;
 }
+
+/* Los items del chat son <button> para accesibilidad.
+   Reseteamos los estilos por defecto del botón. */
+button.chat-item {
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    min-height: auto;
+    border-radius: 0;
+}

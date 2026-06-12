@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react"
 import Navbar from "../components/Navbar.jsx"
 import Footer from "../components/Footer.jsx"
+import Favorito from "../components/Favorito.jsx"
 import { useReveal } from "../hooks/useReveal.js"
 
 const API = import.meta.env.VITE_API_URL || ""
 
-function getImagenURL(m) {
-    if (m.imagen) {
+
+function getImagenURL(m){
+    if(m.imagen){
         return API + "/img/" + m.imagen
     }
     return API + "/img/" + m.nombre.toLowerCase() + ".jpg"
 }
+
 
 export default function Adoptar({ usuario, onLogout, navegar }) {
 
@@ -18,85 +21,81 @@ export default function Adoptar({ usuario, onLogout, navegar }) {
     const [tipo, setTipo] = useState("")
     const [ciudad, setCiudad] = useState("")
     const [busqueda, setBusqueda] = useState("")
+    const [favoritos, setFavoritos] = useState([])
 
-    // reactiva el reveal cuando llegan las mascotas del backend
     useReveal(mascotas)
+
 
     useEffect(() => {
         cargarMascotas()
+        cargarFavoritos()
     }, [])
 
-    async function cargarMascotas() {
+
+    async function cargarMascotas(){
 
         let url = API + "/mascotas?"
+        if(tipo) url += "tipo=" + tipo + "&"
+        if(ciudad) url += "ciudad=" + ciudad + "&"
+        if(busqueda) url += "busqueda=" + busqueda + "&"
 
-        if (tipo) url += "tipo=" + tipo + "&"
-        if (ciudad) url += "ciudad=" + ciudad + "&"
-        if (busqueda) url += "busqueda=" + busqueda + "&"
-
-        try {
+        try{
             const res = await fetch(url)
             const data = await res.json()
             setMascotas(data)
-        } catch (err) {
+        }catch(err){
             console.log("Error al cargar mascotas:", err)
         }
+
     }
 
-    function buscar(e) {
+
+    async function cargarFavoritos(){
+
+        if(!usuario || usuario.tipo !== "adoptante") return
+
+        try{
+            const token = localStorage.getItem("token")
+            const res = await fetch(API + "/favoritos/ids", {
+                headers: {"Authorization": "Bearer " + token}
+            })
+            const data = await res.json()
+            if(Array.isArray(data)){
+                setFavoritos(data)
+            }
+        }catch(err){
+            console.log("Error al cargar favoritos:", err)
+        }
+
+    }
+
+
+    function buscar(e){
         e.preventDefault()
         cargarMascotas()
     }
 
+
     return (
         <>
-            <Navbar
-                usuario={usuario}
-                onLogout={onLogout}
-                navegar={navegar}
-                activo="adoptar"
-            />
+            <Navbar usuario={usuario} onLogout={onLogout} navegar={navegar} activo="adoptar" />
 
             <main id="contenido-principal" tabIndex="-1">
 
-                <section
-                    className="seccion"
-                    style={{ paddingTop: "64px" }}
-                    aria-labelledby="adoptar-titulo"
-                >
+                <section className="seccion" style={{paddingTop: "64px"}} aria-labelledby="adoptar-titulo">
                     <div className="contenedor">
 
-                        <header
-                            className="seccion-cabecera"
-                            style={{ textAlign: "left", marginBottom: "32px" }}
-                        >
+                        <header className="seccion-cabecera" style={{textAlign: "left", marginBottom: "32px"}}>
                             <span className="eyebrow">Adoptar</span>
                             <h1 id="adoptar-titulo">Encuentra a tu compañero</h1>
-                            <p>
-                                Filtra entre {mascotas.length} animales disponibles.
-                            </p>
+                            <p>Filtra entre {mascotas.length} animales disponibles.</p>
                         </header>
 
-                        <form
-                            className="filtros"
-                            onSubmit={buscar}
-                            role="search"
-                            aria-label="Buscar mascotas"
-                        >
+                        <form className="filtros" onSubmit={buscar} role="search" aria-label="Buscar mascotas">
 
-                            <div
-                                className="campo"
-                                style={{ flex: 1, minWidth: "140px", margin: 0 }}
-                            >
-                                <label htmlFor="filtro-tipo" className="sr-only">
-                                    Tipo de animal
-                                </label>
-
-                                <select
-                                    id="filtro-tipo"
-                                    value={tipo}
-                                    onChange={(e) => setTipo(e.target.value)}
-                                >
+                            <div className="campo" style={{flex: 1, minWidth: "140px", margin: 0}}>
+                                <label htmlFor="filtro-tipo" className="sr-only">Tipo de animal</label>
+                                <select id="filtro-tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
                                     <option value="">Todos los animales</option>
                                     <option value="perro">Perro</option>
                                     <option value="gato">Gato</option>
@@ -105,19 +104,9 @@ export default function Adoptar({ usuario, onLogout, navegar }) {
                                 </select>
                             </div>
 
-                            <div
-                                className="campo"
-                                style={{ flex: 1, minWidth: "140px", margin: 0 }}
-                            >
-                                <label htmlFor="filtro-ciudad" className="sr-only">
-                                    Ciudad
-                                </label>
-
-                                <select
-                                    id="filtro-ciudad"
-                                    value={ciudad}
-                                    onChange={(e) => setCiudad(e.target.value)}
-                                >
+                            <div className="campo" style={{flex: 1, minWidth: "140px", margin: 0}}>
+                                <label htmlFor="filtro-ciudad" className="sr-only">Ciudad</label>
+                                <select id="filtro-ciudad" value={ciudad} onChange={(e) => setCiudad(e.target.value)}>
                                     <option value="">Todas las ciudades</option>
                                     <option value="Madrid">Madrid</option>
                                     <option value="Barcelona">Barcelona</option>
@@ -126,14 +115,8 @@ export default function Adoptar({ usuario, onLogout, navegar }) {
                                 </select>
                             </div>
 
-                            <div
-                                className="campo"
-                                style={{ flex: 1, minWidth: "140px", margin: 0 }}
-                            >
-                                <label htmlFor="filtro-busqueda" className="sr-only">
-                                    Buscar por nombre o raza
-                                </label>
-
+                            <div className="campo" style={{flex: 1, minWidth: "140px", margin: 0}}>
+                                <label htmlFor="filtro-busqueda" className="sr-only">Buscar por nombre o raza</label>
                                 <input
                                     id="filtro-busqueda"
                                     type="search"
@@ -143,60 +126,45 @@ export default function Adoptar({ usuario, onLogout, navegar }) {
                                 />
                             </div>
 
-                            <button
-                                type="submit"
-                                className="btn btn-primario"
-                            >
+                            <button type="submit" className="btn btn-primario">
                                 Buscar
                             </button>
-
                         </form>
 
-                        {mascotas.length === 0 ? (
 
+                        {mascotas.length === 0 ? (
                             <p className="vacio" role="status">
                                 No hay animales que coincidan con tu búsqueda.
                             </p>
-
                         ) : (
-
-                            <ul
-                                className="mascotas-grid reveal-grupo"
-                                key={mascotas.length}
-                                aria-label="Lista de mascotas en adopción"
-                            >
+                            <ul className="mascotas-grid reveal-grupo" key={mascotas.length} aria-label="Lista de mascotas en adopción">
                                 {mascotas.map((m) => (
-                                    <li key={m.id}>
-
+                                    <li key={m.id} className="mascota-li">
                                         <a
                                             href={"#mascota/" + m.id}
                                             className="mascota-card"
-                                            onClick={(e) => {
-                                                e.preventDefault()
-                                                navegar("mascota", m.id)
-                                            }}
+                                            onClick={(e) => { e.preventDefault(); navegar("mascota", m.id) }}
                                             aria-label={`Ver detalles de ${m.nombre}, ${m.raza}, ${m.edad} años, ${m.ciudad}`}
                                         >
                                             <div className="mascota-card-img">
                                                 <img
                                                     src={getImagenURL(m)}
                                                     alt={`Foto de ${m.nombre}`}
-                                                    loading="lazy"
-                                                />
+                                                    loading="lazy" />
                                             </div>
-
                                             <div className="mascota-card-info">
                                                 <h2>{m.nombre}</h2>
-                                                <p>
-                                                    {m.raza} · {m.edad} años · {m.ciudad}
-                                                </p>
+                                                <p>{m.raza} · {m.edad} años · {m.ciudad}</p>
                                             </div>
                                         </a>
 
+                                        <Favorito
+                                            mascotaId={m.id}
+                                            usuario={usuario}
+                                            favoritos={favoritos} />
                                     </li>
                                 ))}
                             </ul>
-
                         )}
 
                     </div>

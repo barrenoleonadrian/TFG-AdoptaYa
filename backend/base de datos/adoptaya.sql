@@ -101,7 +101,22 @@ CREATE TABLE IF NOT EXISTS mensajes (
     CONSTRAINT fk_mensajes_receptor FOREIGN KEY (receptor_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
+-- ============================================
+-- FAVORITOS
+-- ============================================
+-- Tabla intermedia muchos a muchos: un usuario puede tener varias mascotas
+-- como favoritas, y una mascota puede ser favorita de varios usuarios.
+-- La combinación (usuario_id, mascota_id) es ÚNICA para evitar duplicados.
 
+CREATE TABLE IF NOT EXISTS favoritos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    mascota_id INT NOT NULL,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_favorito (usuario_id, mascota_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (mascota_id) REFERENCES mascotas(id) ON DELETE CASCADE
+);
 -- ============================================
 -- USUARIO ADMIN POR DEFECTO
 -- Email: admin@adoptaya.com

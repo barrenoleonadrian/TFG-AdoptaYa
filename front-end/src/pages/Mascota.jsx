@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import Navbar from "../components/Navbar.jsx"
 import Footer from "../components/Footer.jsx"
 import Toast from "../components/Toast.jsx"
+import Favorito from "../components/Favorito.jsx"
 
 const API = import.meta.env.VITE_API_URL || ""
 
@@ -163,7 +164,7 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
                                         <p className="detalle-descripcion">{mascota.descripcion}</p>
                                     )}
 
-                                    <div style={{display: "flex", gap: "12px", flexWrap: "wrap"}}>
+                                    <div style={{display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center"}}>
                                         {mascota.estado === "disponible" ? (
                                             <button
                                                 type="button"
@@ -187,6 +188,11 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
                                             className="btn btn-ghost btn-grande">
                                             Contactar con el refugio
                                         </button>
+
+                                        <Favorito
+                                            mascotaId={mascota.id}
+                                            usuario={usuario}
+                                            tamano="grande" />
                                     </div>
 
                                 </div>

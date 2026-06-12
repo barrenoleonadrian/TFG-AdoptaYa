@@ -202,10 +202,16 @@ export default function Navbar({ usuario, onLogout, navegar, activo }) {
 
                                             {usuario.tipo === "adoptante" && (
                                                 <>
+                                                    <a href="#mis-favoritos"
+                                                    className="menu-item"
+                                                    role="menuitem"
+                                                    onClick={(e) => { e.preventDefault(); ir("mis-favoritos") }}>
+                                                        Mis favoritos
+                                                    </a>
                                                     <a href="#mis-solicitudes"
-                                                       className="menu-item"
-                                                       role="menuitem"
-                                                       onClick={(e) => { e.preventDefault(); ir("mis-solicitudes") }}>
+                                                    className="menu-item"
+                                                    role="menuitem"
+                                                    onClick={(e) => { e.preventDefault(); ir("mis-solicitudes") }}>
                                                         Mis solicitudes
                                                     </a>
                                                     <div className="menu-separador" aria-hidden="true"></div>

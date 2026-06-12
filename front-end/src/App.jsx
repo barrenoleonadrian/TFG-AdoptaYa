@@ -10,6 +10,7 @@ import MiRefugio from "./pages/MiRefugio.jsx"
 import MisMascotas from "./pages/MisMascotas.jsx"
 import MisSolicitudes from "./pages/MisSolicitudes.jsx"
 import Mensajes from "./pages/Mensajes.jsx"
+import MisFavoritos from "./pages/MisFavoritos.jsx"
 
 // Router sencillo hecho con useState.
 // La ruta es un string tipo "home", "adoptar", "login", "mascota", "nueva-mascota"
@@ -115,6 +116,13 @@ export default function App() {
             return null
         }
         pagina = <MisSolicitudes usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
+    }
+    else if(ruta === "mis-favoritos"){
+        if(!usuario || usuario.tipo !== "adoptante"){
+            navegar("home")
+            return null
+        }
+        pagina = <MisFavoritos usuario={usuario} onLogout={hacerLogout} navegar={navegar} />
     }
     else if(ruta === "mensajes"){
         if(!usuario){

@@ -3,11 +3,10 @@
 // listar las mascotas del refugio, cambiar su estado, y gestionar
 // las solicitudes de adopción que ha recibido.
 //
-// Todas las funciones requieren que el usuario logueado sea de tipo "protectora",
-// y todas las rutas asociadas pasan antes por el middleware "verificarRefugioActivo"
-// que comprueba además que el refugio esté verificado por el admin.
+// Todas las funciones requieren que el usuario logueado sea de tipo "protectora".
 
 const db = require("../db")
+const notificacionesService = require("../services/notificacionesService")
 
 
 // función auxiliar: comprobar que el usuario es refugio
@@ -46,14 +45,11 @@ exports.cambiarEstadoMascota = (req, res) => {
     const id = req.params.id
     const {estado} = req.body
 
-    // validamos que el estado sea uno de los permitidos
     const estadosValidos = ["disponible", "pendiente", "adoptado"]
     if(!estadosValidos.includes(estado)){
         return res.status(400).json({mensaje: "Estado no válido"})
     }
 
-    // primero comprobamos que la mascota es del refugio que está logueado
-    // (para que un refugio no pueda cambiar mascotas de otro)
     const checkSql = "SELECT usuario_id FROM mascotas WHERE id = ?"
 
     db.query(checkSql, [id], (err, result) => {
@@ -71,7 +67,6 @@ exports.cambiarEstadoMascota = (req, res) => {
             return res.status(403).json({mensaje: "Esta mascota no es tuya"})
         }
 
-        // si todo bien, actualizamos el estado
         const sql = "UPDATE mascotas SET estado = ? WHERE id = ?"
 
         db.query(sql, [estado, id], (err) => {
@@ -115,10 +110,11 @@ exports.misSolicitudes = (req, res) => {
 
 // CAMBIAR ESTADO DE UNA SOLICITUD
 // Estados posibles: "en_revision", "aprobada", "rechazada"
-// Cuando una solicitud se aprueba pasan tres cosas en cadena:
+// Cuando una solicitud se aprueba:
 //   1. La solicitud queda como "aprobada"
 //   2. La mascota pasa a estado "reservada"
 //   3. Las demás solicitudes pendientes/en revisión de esa mascota se rechazan automáticamente
+//   4. Se crean notificaciones para los adoptantes afectados
 exports.cambiarEstadoSolicitud = (req, res) => {
 
     if(!comprobarRefugio(req, res)) return
@@ -130,9 +126,11 @@ exports.cambiarEstadoSolicitud = (req, res) => {
         return res.status(400).json({mensaje: "Estado no válido"})
     }
 
-    // primero comprobamos que la solicitud es para una mascota del refugio
+    // primero recogemos información completa: refugio dueño, mascota, adoptante
+    // y nombre de la mascota (para el texto de la notificación)
     const checkSql = `
-        SELECT m.usuario_id, s.mascota_id
+        SELECT m.usuario_id AS refugio_id, s.mascota_id, s.usuario_id AS adoptante_id,
+               m.nombre AS mascota_nombre
         FROM solicitudes_adopcion s
         JOIN mascotas m ON m.id = s.mascota_id
         WHERE s.id = ?
@@ -149,11 +147,13 @@ exports.cambiarEstadoSolicitud = (req, res) => {
             return res.status(404).json({mensaje: "Solicitud no encontrada"})
         }
 
-        if(result[0].usuario_id !== req.usuario.id){
+        if(result[0].refugio_id !== req.usuario.id){
             return res.status(403).json({mensaje: "Esta solicitud no es tuya"})
         }
 
         const mascotaId = result[0].mascota_id
+        const adoptanteId = result[0].adoptante_id
+        const mascotaNombre = result[0].mascota_nombre
 
         // actualizamos el estado de la solicitud
         const sql = "UPDATE solicitudes_adopcion SET estado = ? WHERE id = ?"
@@ -165,10 +165,16 @@ exports.cambiarEstadoSolicitud = (req, res) => {
                 return res.status(500).json({mensaje: "Error al actualizar"})
             }
 
-            // CASO 1: si se aprueba la solicitud
-            // → la mascota pasa a "reservada"
-            // → las demás solicitudes activas se rechazan automáticamente
+            // CASO 1: solicitud aprobada
             if(estado === "aprobada"){
+
+                // notificamos al adoptante que su solicitud ha sido aprobada
+                notificacionesService.crear(
+                    adoptanteId,
+                    "solicitud_aprobada",
+                    `¡Tu solicitud para adoptar a ${mascotaNombre} ha sido aprobada!`,
+                    "mis-solicitudes"
+                )
 
                 const updateMascota = "UPDATE mascotas SET estado = 'reservada' WHERE id = ?"
 
@@ -179,27 +185,58 @@ exports.cambiarEstadoSolicitud = (req, res) => {
                         return res.status(500).json({mensaje: "Error al actualizar la mascota"})
                     }
 
-                    // rechazamos las demás solicitudes pendientes o en revisión de esa mascota
-                    // (las que no son la que acabamos de aprobar)
-                    const rechazarOtras = `
-                        UPDATE solicitudes_adopcion
-                        SET estado = 'rechazada'
+                    // antes de rechazar las demás solicitudes, recogemos los ids
+                    // de los adoptantes afectados para notificarlos.
+                    const buscarAfectados = `
+                        SELECT usuario_id FROM solicitudes_adopcion
                         WHERE mascota_id = ? AND id != ? AND estado IN ('pendiente', 'en_revision')
                     `
 
-                    db.query(rechazarOtras, [mascotaId, id], () => {
-                        res.json({mensaje: "Solicitud aprobada. Mascota reservada y otras solicitudes rechazadas."})
+                    db.query(buscarAfectados, [mascotaId, id], (err, afectados) => {
+
+                        // si falla la consulta, seguimos sin notificar a los otros
+                        // (no es crítico para el flujo principal)
+                        const idsAfectados = err ? [] : afectados.map(a => a.usuario_id)
+
+                        // ahora sí rechazamos las demás solicitudes activas
+                        const rechazarOtras = `
+                            UPDATE solicitudes_adopcion
+                            SET estado = 'rechazada'
+                            WHERE mascota_id = ? AND id != ? AND estado IN ('pendiente', 'en_revision')
+                        `
+
+                        db.query(rechazarOtras, [mascotaId, id], () => {
+
+                            // notificamos a cada uno de los rechazados automáticamente
+                            for(const otroId of idsAfectados){
+                                notificacionesService.crear(
+                                    otroId,
+                                    "solicitud_rechazada",
+                                    `Tu solicitud para adoptar a ${mascotaNombre} ha sido rechazada.`,
+                                    "mis-solicitudes"
+                                )
+                            }
+
+                            res.json({mensaje: "Solicitud aprobada. Mascota reservada y otras solicitudes rechazadas."})
+
+                        })
+
                     })
 
                 })
 
             }
-            // CASO 2: si se rechaza una solicitud que estaba aprobada
-            // → la mascota vuelve a "disponible" (siempre que no haya otra solicitud aprobada activa)
-            // así otra persona puede volver a pedir la adopción.
+            // CASO 2: solicitud rechazada
             else if(estado === "rechazada"){
 
-                // miramos si queda alguna otra solicitud aprobada para esta mascota
+                // notificamos al adoptante del rechazo
+                notificacionesService.crear(
+                    adoptanteId,
+                    "solicitud_rechazada",
+                    `Tu solicitud para adoptar a ${mascotaNombre} ha sido rechazada.`,
+                    "mis-solicitudes"
+                )
+
                 const checkAprobadas = `
                     SELECT COUNT(*) AS total FROM solicitudes_adopcion
                     WHERE mascota_id = ? AND estado = 'aprobada' AND id != ?
@@ -212,9 +249,6 @@ exports.cambiarEstadoSolicitud = (req, res) => {
                         return res.json({mensaje: "Solicitud rechazada"})
                     }
 
-                    // si NO quedan otras aprobadas: ponemos la mascota como disponible.
-                    // (sólo afecta si la mascota estaba reservada o pendiente; si ya estaba
-                    // disponible, este UPDATE no cambia nada).
                     if(result[0].total === 0){
                         const liberarMascota = `
                             UPDATE mascotas SET estado = 'disponible'
@@ -230,7 +264,7 @@ exports.cambiarEstadoSolicitud = (req, res) => {
                 })
 
             }
-            // CASO 3: si pasa a "en_revision", no hay que tocar la mascota
+            // CASO 3: en_revision, no hay que notificar nada
             else {
                 res.json({mensaje: "Estado actualizado"})
             }
@@ -243,15 +277,12 @@ exports.cambiarEstadoSolicitud = (req, res) => {
 
 
 // MARCAR MASCOTA COMO ADOPTADA (paso final)
-// Solo se puede llamar cuando la mascota está "reservada".
-// Esto refleja el momento real de entrega del animal al adoptante.
 exports.marcarAdoptada = (req, res) => {
 
     if(!comprobarRefugio(req, res)) return
 
     const id = req.params.id
 
-    // comprobamos que la mascota es del refugio Y está reservada
     const checkSql = "SELECT usuario_id, estado FROM mascotas WHERE id = ?"
 
     db.query(checkSql, [id], (err, result) => {

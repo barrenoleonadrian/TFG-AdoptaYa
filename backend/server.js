@@ -40,6 +40,7 @@ app.use(require('./routes/mensajesRoutes'))
 app.use(require('./routes/misMascotasRoutes'))
 app.use(require('./routes/favoritosRoutes'))
 app.use(require('./routes/valoracionesRoutes'))
+app.use(require('./routes/notificacionesRoutes'))
 
 
 // ====== MANEJO DE ERRORES ======

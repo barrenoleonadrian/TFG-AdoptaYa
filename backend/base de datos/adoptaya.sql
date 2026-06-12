@@ -139,6 +139,32 @@ CREATE TABLE IF NOT EXISTS valoraciones (
     FOREIGN KEY (adoptante_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     CHECK (estrellas BETWEEN 1 AND 5)
 );
+
+-- ============================================
+-- NOTIFICACIONES
+-- ============================================
+-- Cuando algo importante le pasa a un usuario (le aprueban una solicitud,
+-- le verifican el refugio, recibe un mensaje, etc.) se crea una fila
+-- en esta tabla. El frontend hace polling cada 30 segundos para
+-- detectar notificaciones nuevas y mostrar el contador en la campanita.
+--
+-- - tipo: identifica de qué tipo es ('solicitud_aprobada', 'mensaje_nuevo'...).
+--         Sirve para mostrar un icono distinto en el frontend.
+-- - texto: el mensaje que ve el usuario.
+-- - enlace: ruta interna a la que ir al hacer click (ej: "mis-solicitudes").
+-- - leida: 0 o 1. Las leídas no cuentan en el contador.
+
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    tipo VARCHAR(50) NOT NULL,
+    texto VARCHAR(255) NOT NULL,
+    enlace VARCHAR(100),
+    leida TINYINT(1) DEFAULT 0,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    INDEX idx_usuario_leida (usuario_id, leida)
+);
 -- ============================================
 -- USUARIO ADMIN POR DEFECTO
 -- Email: admin@adoptaya.com

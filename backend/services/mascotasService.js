@@ -7,6 +7,7 @@
 // errorHandler central los convierta en respuestas HTTP correctas.
 
 const mascotasRepo = require('../repositories/mascotasRepository')
+const notificacionesService = require('./notificacionesService')
 
 const {
     BadRequestError,
@@ -114,6 +115,15 @@ async function solicitarAdopcion(usuario, mascotaId, datos){
         motivo,
         situacion_laboral
     })
+
+    // notificamos al refugio que tiene una solicitud nueva.
+    // mascota.usuario_id es el id del refugio dueño de la mascota.
+    notificacionesService.crear(
+        mascota.usuario_id,
+        "solicitud_nueva",
+        `${nombre_solicitante} ha solicitado adoptar a ${mascota.nombre}.`,
+        "mis-mascotas"
+    )
 
     return { mensaje: 'Solicitud enviada correctamente' }
 

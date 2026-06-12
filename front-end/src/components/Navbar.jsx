@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import Notificaciones from "./Notificaciones.jsx"
 
 const API = import.meta.env.VITE_API_URL || ""
 
@@ -138,6 +139,8 @@ export default function Navbar({ usuario, onLogout, navegar, activo }) {
 
                         {usuario ? (
                             <>
+                                <Notificaciones usuario={usuario} navegar={ir} />
+                                
                                 <a href="#mensajes"
                                    className={"nav-mensajes-link " + (activo === "mensajes" ? "activo" : "")}
                                    onClick={(e) => { e.preventDefault(); ir("mensajes") }}

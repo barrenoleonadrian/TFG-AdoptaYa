@@ -2026,3 +2026,27 @@ button.chat-item {
     line-height: 1.5;
     margin: 0;
 }
+
+/* colores específicos para cada tipo de notificación */
+.notif-icono {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    line-height: 1;
+}
+
+.notif-icono svg {
+    width: 20px;
+    height: 20px;
+}
+
+.notif-icono-solicitud_aprobada { color: var(--acento); }
+.notif-icono-solicitud_rechazada { color: var(--rojo); }
+.notif-icono-solicitud_nueva { color: #3b82f6; }
+.notif-icono-refugio_verificado { color: var(--acento); }
+.notif-icono-mensaje_nuevo { color: #3b82f6; }
+.notif-icono-valoracion_nueva { color: #F59E0B; }

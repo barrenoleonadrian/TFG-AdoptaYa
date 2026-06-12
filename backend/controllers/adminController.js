@@ -1,4 +1,5 @@
 const db = require("../db")
+const notificacionesService = require("../services/notificacionesService")
 
 
 // ====== USUARIOS ======
@@ -30,6 +31,9 @@ exports.listarUsuarios = (req, res) => {
 
 
 // Verificar un refugio (cambiar verificado a true)
+// Verificar un refugio (cambiar verificado a true)
+// Después de verificar, notificamos al refugio para que sepa que ya
+// puede empezar a publicar mascotas.
 exports.verificarRefugio = (req, res) => {
 
     const id = req.params.id
@@ -37,13 +41,24 @@ exports.verificarRefugio = (req, res) => {
     const sql = "UPDATE usuarios SET verificado = TRUE WHERE id = ? AND tipo = 'protectora'"
 
     db.query(sql, [id], (err, result) => {
+
         if(err){
             return res.status(500).json({mensaje:"Error del servidor"})
         }
         if(result.affectedRows === 0){
             return res.status(404).json({mensaje:"Refugio no encontrado"})
         }
+
+        // notificación al refugio recién verificado
+        notificacionesService.crear(
+            parseInt(id),
+            "refugio_verificado",
+            "Tu refugio ha sido verificado. Ya puedes empezar a publicar mascotas.",
+            "mi-refugio"
+        )
+
         res.json({mensaje:"Refugio verificado"})
+
     })
 
 }

@@ -6,8 +6,6 @@ export default function Login({ onLogin, navegar }) {
 
     const [modo, setModo] = useState("login")
     const [error, setError] = useState("")
-
-    // si el registro de un refugio sale bien, mostramos un mensaje y ya
     const [registroOk, setRegistroOk] = useState(false)
 
     const [email, setEmail] = useState("")
@@ -30,7 +28,8 @@ export default function Login({ onLogin, navegar }) {
     }
 
 
-    async function hacerLogin(){
+    async function hacerLogin(e){
+        e.preventDefault()
         setError("")
         if(!email || !password){ setError("Completa todos los campos"); return }
         try{
@@ -47,7 +46,8 @@ export default function Login({ onLogin, navegar }) {
     }
 
 
-    async function hacerRegistro(){
+    async function hacerRegistro(e){
+        e.preventDefault()
         setError("")
         if(!nombre || !email || !password){ setError("Nombre, email y contraseña son obligatorios"); return }
         if(tipo === "protectora" && !cif){ setError("El CIF es obligatorio para refugios"); return }
@@ -61,13 +61,11 @@ export default function Login({ onLogin, navegar }) {
             const data = await res.json()
             if(!res.ok){ setError(data.mensaje || "Error al registrarse"); return }
 
-            // si el backend devuelve "pendiente" es un refugio: mostramos mensaje
             if(data.pendiente){
                 setRegistroOk(true)
                 return
             }
 
-            // si no, era un adoptante: login automático como antes
             onLogin(data)
             despues()
         }catch(err){ setError("Error de conexión con el servidor") }
@@ -75,97 +73,149 @@ export default function Login({ onLogin, navegar }) {
 
 
     return (
-        <div className="auth-wrapper">
-            <div className="auth-caja">
+        <main id="contenido-principal" tabIndex="-1" className="auth-wrapper">
+            <section className="auth-caja" aria-labelledby="auth-titulo">
 
-                <a href="#home" className="auth-logo" onClick={(e) => { e.preventDefault(); navegar("home") }}>
+                <a href="#home"
+                   className="auth-logo"
+                   onClick={(e) => { e.preventDefault(); navegar("home") }}
+                   aria-label="AdoptaYa, ir a la página de inicio">
                     <img src="/img/logo.png" alt="" />
                     Adopta<span>Ya</span>
                 </a>
 
-                {/* mensaje de registro pendiente (cuando un refugio se acaba de registrar) */}
                 {registroOk ? (
-                    <>
-                        <h2>¡Solicitud recibida!</h2>
+                    <div role="status">
+                        <h1 id="auth-titulo">¡Solicitud recibida!</h1>
                         <p className="auth-subtitulo" style={{marginBottom: "24px"}}>
                             Hemos recibido tu solicitud para registrar el refugio. El administrador
                             verificará tus datos en breve y te avisará cuando puedas empezar a usar
                             tu cuenta.
                         </p>
                         <button
+                            type="button"
                             onClick={() => { setRegistroOk(false); setModo("login") }}
                             className="btn btn-primario btn-ancho btn-grande">
                             Volver al inicio
                         </button>
-                    </>
+                    </div>
                 ) : modo === "login" ? (
-                    <>
-                        <h2>Bienvenido de vuelta</h2>
+                    <form onSubmit={hacerLogin} noValidate>
+                        <h1 id="auth-titulo">Bienvenido de vuelta</h1>
                         <p className="auth-subtitulo">Inicia sesión para continuar.</p>
 
-                        {error && <div className="error">{error}</div>}
+                        {error && <div className="error" role="alert">{error}</div>}
 
                         <div className="campo">
-                            <label>Email</label>
-                            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" />
+                            <label htmlFor="login-email" data-required>Email</label>
+                            <input
+                                id="login-email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="tu@email.com"
+                                autoComplete="email"
+                                required
+                                aria-required="true" />
                         </div>
 
                         <div className="campo">
-                            <label>Contraseña</label>
-                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                            <label htmlFor="login-password" data-required>Contraseña</label>
+                            <input
+                                id="login-password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                autoComplete="current-password"
+                                required
+                                aria-required="true" />
                         </div>
 
-                        <button onClick={hacerLogin} className="btn btn-primario btn-ancho btn-grande">
+                        <button type="submit" className="btn btn-primario btn-ancho btn-grande">
                             Iniciar sesión
                         </button>
 
                         <p className="auth-toggle">
                             ¿No tienes cuenta?{" "}
-                            <button onClick={() => { setModo("registro"); setError("") }}>
+                            <button type="button" onClick={() => { setModo("registro"); setError("") }}>
                                 Regístrate
                             </button>
                         </p>
-                    </>
+                    </form>
                 ) : (
-                    <>
-                        <h2>Crea tu cuenta</h2>
+                    <form onSubmit={hacerRegistro} noValidate>
+                        <h1 id="auth-titulo">Crea tu cuenta</h1>
                         <p className="auth-subtitulo">Empieza tu proceso de adopción en segundos.</p>
 
-                        {error && <div className="error">{error}</div>}
+                        {error && <div className="error" role="alert">{error}</div>}
 
                         <div className="campo">
-                            <label>Nombre</label>
-                            <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Tu nombre o el del refugio" />
+                            <label htmlFor="reg-nombre" data-required>Nombre</label>
+                            <input
+                                id="reg-nombre"
+                                value={nombre}
+                                onChange={(e) => setNombre(e.target.value)}
+                                placeholder="Tu nombre o el del refugio"
+                                autoComplete="name"
+                                required
+                                aria-required="true" />
                         </div>
 
                         <div className="campo">
-                            <label>Email</label>
-                            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" />
+                            <label htmlFor="reg-email" data-required>Email</label>
+                            <input
+                                id="reg-email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="tu@email.com"
+                                autoComplete="email"
+                                required
+                                aria-required="true" />
                         </div>
 
                         <div className="campo">
-                            <label>Contraseña</label>
-                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
+                            <label htmlFor="reg-password" data-required>Contraseña</label>
+                            <input
+                                id="reg-password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Mínimo 6 caracteres"
+                                autoComplete="new-password"
+                                minLength="6"
+                                required
+                                aria-required="true"
+                                aria-describedby="reg-password-ayuda" />
+                            <small id="reg-password-ayuda" className="campo-ayuda">
+                                Mínimo 6 caracteres.
+                            </small>
                         </div>
 
                         <div className="campo">
-                            <label>Tipo de cuenta</label>
-                            <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+                            <label htmlFor="reg-tipo">Tipo de cuenta</label>
+                            <select
+                                id="reg-tipo"
+                                value={tipo}
+                                onChange={(e) => setTipo(e.target.value)}>
                                 <option value="adoptante">Usuario — quiero adoptar</option>
                                 <option value="protectora">Refugio — quiero publicar animales</option>
                             </select>
                         </div>
 
-                        {/* el CIF solo se pide si es refugio */}
                         {tipo === "protectora" && (
                             <div className="campo">
-                                <label>CIF del refugio</label>
+                                <label htmlFor="reg-cif" data-required>CIF del refugio</label>
                                 <input
+                                    id="reg-cif"
                                     value={cif}
                                     onChange={(e) => setCif(e.target.value)}
                                     placeholder="Ejemplo: G12345678"
-                                />
-                                <small style={{color: "var(--gris-500)", fontSize: "12px", marginTop: "4px", display: "block"}}>
+                                    required
+                                    aria-required="true"
+                                    aria-describedby="reg-cif-ayuda" />
+                                <small id="reg-cif-ayuda" className="campo-ayuda">
                                     El administrador verificará el CIF antes de activar tu cuenta.
                                 </small>
                             </div>
@@ -173,29 +223,38 @@ export default function Login({ onLogin, navegar }) {
 
                         <div className="campos-fila">
                             <div className="campo">
-                                <label>Teléfono</label>
-                                <input value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+                                <label htmlFor="reg-telefono">Teléfono</label>
+                                <input
+                                    id="reg-telefono"
+                                    type="tel"
+                                    value={telefono}
+                                    onChange={(e) => setTelefono(e.target.value)}
+                                    autoComplete="tel" />
                             </div>
                             <div className="campo">
-                                <label>Ciudad</label>
-                                <input value={ciudad} onChange={(e) => setCiudad(e.target.value)} />
+                                <label htmlFor="reg-ciudad">Ciudad</label>
+                                <input
+                                    id="reg-ciudad"
+                                    value={ciudad}
+                                    onChange={(e) => setCiudad(e.target.value)}
+                                    autoComplete="address-level2" />
                             </div>
                         </div>
 
-                        <button onClick={hacerRegistro} className="btn btn-primario btn-ancho btn-grande">
+                        <button type="submit" className="btn btn-primario btn-ancho btn-grande">
                             Crear cuenta
                         </button>
 
                         <p className="auth-toggle">
                             ¿Ya tienes cuenta?{" "}
-                            <button onClick={() => { setModo("login"); setError("") }}>
+                            <button type="button" onClick={() => { setModo("login"); setError("") }}>
                                 Inicia sesión
                             </button>
                         </p>
-                    </>
+                    </form>
                 )}
 
-            </div>
-        </div>
+            </section>
+        </main>
     )
 }

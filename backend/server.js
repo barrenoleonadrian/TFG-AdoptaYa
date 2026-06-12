@@ -2,48 +2,56 @@
 // Configura Express, los middlewares globales y registra todas las rutas
 // de la API REST. El servidor arranca en el puerto 3000.
 
-require('dotenv').config()
-const express = require("express")
-const cors = require("cors")
-const app = express()
-app.set('trust proxy', 1)
+const express = require('express')
+const cors = require('cors')
 const helmet = require('helmet')
+
+const config = require('./config')
+const errorHandler = require('./middleware/errorHandler')
 const { limiteGeneral } = require('./middleware/rateLimit')
 
+const app = express()
 
-// importamos los routers organizados por funcionalidad
-const mascotasRoutes = require("./routes/mascotasRoutes")
-const usuariosRoutes = require("./routes/usuariosRoutes")
-const adminRoutes = require("./routes/adminRoutes")
-const refugiosRoutes = require("./routes/refugiosRoutes")
-const mensajesRoutes = require("./routes/mensajesRoutes")
-const misMascotasRoutes = require("./routes/misMascotasRoutes")
+
+// confiar en el proxy inverso de Nginx (necesario para que el rate limiter
+// identifique correctamente la IP real del cliente)
+app.set('trust proxy', 1)
+
+
+// ====== MIDDLEWARES GLOBALES ======
 
 app.use(helmet())
 app.use(limiteGeneral)
-// CORS permite que el frontend (puerto 5173) pueda llamar al backend (3000)
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}))
-// para que Express lea automáticamente los body JSON de las peticiones
+app.use(cors(config.cors))
 app.use(express.json())
 
 // servir imágenes como ruta pública. Tiene que ir ANTES de las rutas
-// privadas, si no, los middlewares de autenticación protegerían también
-// el acceso a las imágenes y se romperían las cargas.
-app.use("/img", express.static("img"))
+// privadas para que los middlewares de auth no protejan también /img.
+app.use('/img', express.static('img'))
 
-// registramos los routers (cada uno gestiona su parte de la API)
-app.use(usuariosRoutes)
-app.use(mascotasRoutes)
-app.use(adminRoutes)
-app.use(refugiosRoutes)
-app.use(mensajesRoutes)
-app.use(misMascotasRoutes)
 
-app.listen(3000, () => {
-    console.log("Servidor funcionando en puerto 3000")
+// ====== ROUTERS ======
+
+app.use(require('./routes/usuariosRoutes'))
+app.use(require('./routes/mascotasRoutes'))
+app.use(require('./routes/adminRoutes'))
+app.use(require('./routes/refugiosRoutes'))
+app.use(require('./routes/mensajesRoutes'))
+app.use(require('./routes/misMascotasRoutes'))
+app.use(require('./routes/favoritosRoutes'))
+app.use(require('./routes/valoracionesRoutes'))
+app.use(require('./routes/notificacionesRoutes'))
+
+
+// ====== MANEJO DE ERRORES ======
+// IMPORTANTE: este middleware debe ir SIEMPRE el último, después de todas
+// las rutas. Captura cualquier error que se pase con next(err) desde un
+// controller y lo convierte en una respuesta HTTP coherente.
+app.use(errorHandler)
+
+
+// ====== ARRANQUE ======
+
+app.listen(config.port, () => {
+    console.log(`Servidor funcionando en puerto ${config.port}`)
 })

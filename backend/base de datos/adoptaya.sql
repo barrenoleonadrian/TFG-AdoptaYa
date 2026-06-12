@@ -101,7 +101,70 @@ CREATE TABLE IF NOT EXISTS mensajes (
     CONSTRAINT fk_mensajes_receptor FOREIGN KEY (receptor_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
+-- ============================================
+-- FAVORITOS
+-- ============================================
+-- Tabla intermedia muchos a muchos: un usuario puede tener varias mascotas
+-- como favoritas, y una mascota puede ser favorita de varios usuarios.
+-- La combinación (usuario_id, mascota_id) es ÚNICA para evitar duplicados.
 
+CREATE TABLE IF NOT EXISTS favoritos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    mascota_id INT NOT NULL,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_favorito (usuario_id, mascota_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (mascota_id) REFERENCES mascotas(id) ON DELETE CASCADE
+);
+
+-- ============================================
+-- VALORACIONES
+-- ============================================
+-- Reseñas que los adoptantes dejan a los refugios después de tener
+-- una solicitud aprobada con ellos. Cada usuario solo puede valorar
+-- una vez a cada refugio (UNIQUE), pero puede editar su valoración.
+-- Solo se permite valorar si existe una solicitud aprobada entre
+-- el adoptante y el refugio (esa validación se hace en el backend).
+
+CREATE TABLE IF NOT EXISTS valoraciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    refugio_id INT NOT NULL,
+    adoptante_id INT NOT NULL,
+    estrellas TINYINT NOT NULL,
+    comentario TEXT,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_valoracion (refugio_id, adoptante_id),
+    FOREIGN KEY (refugio_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (adoptante_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CHECK (estrellas BETWEEN 1 AND 5)
+);
+
+-- ============================================
+-- NOTIFICACIONES
+-- ============================================
+-- Cuando algo importante le pasa a un usuario (le aprueban una solicitud,
+-- le verifican el refugio, recibe un mensaje, etc.) se crea una fila
+-- en esta tabla. El frontend hace polling cada 30 segundos para
+-- detectar notificaciones nuevas y mostrar el contador en la campanita.
+--
+-- - tipo: identifica de qué tipo es ('solicitud_aprobada', 'mensaje_nuevo'...).
+--         Sirve para mostrar un icono distinto en el frontend.
+-- - texto: el mensaje que ve el usuario.
+-- - enlace: ruta interna a la que ir al hacer click (ej: "mis-solicitudes").
+-- - leida: 0 o 1. Las leídas no cuentan en el contador.
+
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    tipo VARCHAR(50) NOT NULL,
+    texto VARCHAR(255) NOT NULL,
+    enlace VARCHAR(100),
+    leida TINYINT(1) DEFAULT 0,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    INDEX idx_usuario_leida (usuario_id, leida)
+);
 -- ============================================
 -- USUARIO ADMIN POR DEFECTO
 -- Email: admin@adoptaya.com
@@ -115,3 +178,4 @@ VALUES (
     'admin',
     TRUE
 );
+

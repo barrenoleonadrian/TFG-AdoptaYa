@@ -13,14 +13,12 @@ export default function MiRefugio({ usuario, onLogout, navegar }) {
     const [descripcion, setDescripcion] = useState("")
     const [imagen, setImagen] = useState(null)
 
-    // si ya hay perfil creado, guardamos la imagen actual para mostrarla
     const [imagenActual, setImagenActual] = useState(null)
 
     const [error, setError] = useState("")
     const [ok, setOk] = useState("")
 
 
-    // al entrar, traemos el perfil si ya existe y precargamos los campos
     useEffect(() => {
         cargar()
     }, [])
@@ -34,7 +32,6 @@ export default function MiRefugio({ usuario, onLogout, navegar }) {
             })
             const data = await res.json()
 
-            // si el refugio ya tiene perfil, precargamos los campos
             if(data){
                 setNombre(data.nombre || "")
                 setEmail(data.email || "")
@@ -43,7 +40,6 @@ export default function MiRefugio({ usuario, onLogout, navegar }) {
                 setDescripcion(data.descripcion || "")
                 setImagenActual(data.imagen)
             }else{
-                // si es la primera vez, ponemos el nombre del usuario como default
                 setNombre(usuario.nombre || "")
             }
 
@@ -53,8 +49,9 @@ export default function MiRefugio({ usuario, onLogout, navegar }) {
     }
 
 
-    async function guardar(){
+    async function guardar(e){
 
+        e.preventDefault()
         setError("")
         setOk("")
 
@@ -88,7 +85,7 @@ export default function MiRefugio({ usuario, onLogout, navegar }) {
             }
 
             setOk("Información guardada correctamente")
-            cargar()   // recarga para ver la imagen nueva si se subió
+            cargar()
 
         }catch(err){
             setError("Error de conexión")
@@ -98,88 +95,117 @@ export default function MiRefugio({ usuario, onLogout, navegar }) {
 
 
     return (
-        <div>
-
+        <>
             <Navbar usuario={usuario} onLogout={onLogout} navegar={navegar} />
 
-            <section className="seccion" style={{paddingTop: "64px"}}>
-                <div className="contenedor">
+            <main id="contenido-principal" tabIndex="-1">
 
-                    <div className="seccion-cabecera" style={{textAlign: "left", maxWidth: "100%", marginBottom: "32px"}}>
-                        <span className="eyebrow">Mi refugio</span>
-                        <h2>Información del refugio</h2>
-                        <p>Los datos que pongas aquí aparecerán en la página pública de refugios.</p>
-                    </div>
+                <section className="seccion" style={{paddingTop: "64px"}} aria-labelledby="mi-refugio-titulo">
+                    <div className="contenedor">
 
-                    <div className="form-caja">
+                        <header className="seccion-cabecera" style={{textAlign: "left", maxWidth: "100%", marginBottom: "32px"}}>
+                            <span className="eyebrow">Mi refugio</span>
+                            <h1 id="mi-refugio-titulo">Información del refugio</h1>
+                            <p>Los datos que pongas aquí aparecerán en la página pública de refugios.</p>
+                        </header>
 
-                        {error && <div className="error">{error}</div>}
-                        {ok && <div className="exito">{ok}</div>}
+                        <form className="form-caja" onSubmit={guardar} noValidate>
 
-                        {imagenActual && (
+                            {error && <div className="error" role="alert">{error}</div>}
+                            {ok && <div className="exito" role="status">{ok}</div>}
+
+                            {imagenActual && (
+                                <div className="campo">
+                                    <p className="campo-ayuda" style={{marginBottom: "8px", fontWeight: 600, color: "var(--negro)"}}>
+                                        Imagen actual
+                                    </p>
+                                    <img
+                                        src={API + "/img/" + imagenActual}
+                                        alt="Imagen actual del refugio"
+                                        style={{width: "120px", height: "120px", borderRadius: "12px", objectFit: "cover"}}
+                                    />
+                                </div>
+                            )}
+
                             <div className="campo">
-                                <label>Imagen actual</label>
-                                <img
-                                    src={API + "/img/" + imagenActual}
-                                    alt="Logo del refugio"
-                                    style={{width: "120px", height: "120px", borderRadius: "12px", objectFit: "cover"}}
+                                <label htmlFor="mr-nombre" data-required>Nombre del refugio</label>
+                                <input
+                                    id="mr-nombre"
+                                    value={nombre}
+                                    onChange={(e) => setNombre(e.target.value)}
+                                    autoComplete="organization"
+                                    required
+                                    aria-required="true" />
+                            </div>
+
+                            <div className="campos-fila">
+                                <div className="campo">
+                                    <label htmlFor="mr-email">Email de contacto</label>
+                                    <input
+                                        id="mr-email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        autoComplete="email" />
+                                </div>
+                                <div className="campo">
+                                    <label htmlFor="mr-telefono">Teléfono</label>
+                                    <input
+                                        id="mr-telefono"
+                                        type="tel"
+                                        value={telefono}
+                                        onChange={(e) => setTelefono(e.target.value)}
+                                        autoComplete="tel" />
+                                </div>
+                            </div>
+
+                            <div className="campo">
+                                <label htmlFor="mr-ciudad">Ciudad</label>
+                                <input
+                                    id="mr-ciudad"
+                                    value={ciudad}
+                                    onChange={(e) => setCiudad(e.target.value)}
+                                    autoComplete="address-level2" />
+                            </div>
+
+                            <div className="campo">
+                                <label htmlFor="mr-imagen">
+                                    {imagenActual ? "Cambiar imagen (opcional)" : "Imagen del refugio"}
+                                </label>
+                                <input
+                                    id="mr-imagen"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setImagen(e.target.files[0])}
+                                    aria-describedby="mr-imagen-ayuda" />
+                                <small id="mr-imagen-ayuda" className="campo-ayuda">
+                                    Formatos admitidos: JPG, PNG o WEBP. Máximo 5 MB.
+                                </small>
+                            </div>
+
+                            <div className="campo">
+                                <label htmlFor="mr-descripcion">Descripción</label>
+                                <textarea
+                                    id="mr-descripcion"
+                                    rows="5"
+                                    value={descripcion}
+                                    onChange={(e) => setDescripcion(e.target.value)}
+                                    placeholder="Cuéntanos sobre tu refugio: desde cuándo estáis activos, qué tipo de animales acogéis, cómo trabajáis..."
                                 />
                             </div>
-                        )}
 
-                        <div className="campo">
-                            <label>Nombre del refugio *</label>
-                            <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
-                        </div>
+                            <button type="submit" className="btn btn-primario btn-ancho btn-grande">
+                                Guardar cambios
+                            </button>
 
-                        <div className="campos-fila">
-                            <div className="campo">
-                                <label>Email de contacto</label>
-                                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                            </div>
-                            <div className="campo">
-                                <label>Teléfono</label>
-                                <input value={telefono} onChange={(e) => setTelefono(e.target.value)} />
-                            </div>
-                        </div>
-
-                        <div className="campo">
-                            <label>Ciudad</label>
-                            <input value={ciudad} onChange={(e) => setCiudad(e.target.value)} />
-                        </div>
-
-                        <div className="campo">
-                            <label>
-                                {imagenActual ? "Cambiar imagen (opcional)" : "Imagen del refugio"}
-                            </label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => setImagen(e.target.files[0])}
-                            />
-                        </div>
-
-                        <div className="campo">
-                            <label>Descripción</label>
-                            <textarea
-                                rows="5"
-                                value={descripcion}
-                                onChange={(e) => setDescripcion(e.target.value)}
-                                placeholder="Cuéntanos sobre tu refugio: desde cuándo estáis activos, qué tipo de animales acogéis, cómo trabajáis..."
-                            />
-                        </div>
-
-                        <button onClick={guardar} className="btn btn-primario btn-ancho btn-grande">
-                            Guardar cambios
-                        </button>
+                        </form>
 
                     </div>
+                </section>
 
-                </div>
-            </section>
+            </main>
 
             <Footer navegar={navegar} />
-
-        </div>
+        </>
     )
 }

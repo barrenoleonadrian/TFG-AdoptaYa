@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Navbar from "../components/Navbar.jsx"
 import Footer from "../components/Footer.jsx"
 import Toast from "../components/Toast.jsx"
+import Favorito from "../components/Favorito.jsx"
 
 const API = import.meta.env.VITE_API_URL || ""
 
@@ -17,14 +18,10 @@ function getImagenURL(m){
 export default function Mascota({ id, usuario, onLogout, navegar }) {
 
     const [mascota, setMascota] = useState(null)
-
-    // estado para el toast: { texto, tipo } o null
     const [toast, setToast] = useState(null)
-
-    // si está abierto el modal con el formulario de adopción
     const [abrirForm, setAbrirForm] = useState(false)
 
-    // muestra un mensaje. tipo: "ok" (verde) o "error" (rojo)
+
     function mostrar(texto, tipo = "ok"){
         setToast({ texto, tipo })
     }
@@ -46,7 +43,6 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
     }
 
 
-    // al pulsar "Solicitar adopción": comprueba sesión y abre el formulario
     function abrirFormulario(){
 
         if(!usuario){
@@ -65,13 +61,10 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
     }
 
 
-    // se llama desde el formulario una vez completado y validado
     async function enviarSolicitud(datos){
 
         try{
-
             const token = localStorage.getItem("token")
-
             const res = await fetch(API + "/mascotas/" + id + "/adoptar", {
                 method: "POST",
                 headers: {
@@ -80,7 +73,6 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
                 },
                 body: JSON.stringify(datos)
             })
-
             const data = await res.json()
 
             if(res.ok){
@@ -89,7 +81,6 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
             }else{
                 mostrar(data.mensaje || "Error al enviar la solicitud", "error")
             }
-
         }catch(err){
             mostrar("Error de conexión", "error")
         }
@@ -97,7 +88,6 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
     }
 
 
-    // contacta con el refugio que publicó esta mascota
     function contactar(){
 
         if(!usuario){
@@ -122,79 +112,98 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
 
 
     return (
-        <div>
-
+        <>
             <Navbar usuario={usuario} onLogout={onLogout} navegar={navegar} />
 
-            <section className="seccion" style={{paddingTop: "48px"}}>
-                <div className="contenedor">
+            <main id="contenido-principal" tabIndex="-1">
 
-                    <a href="#adoptar" className="volver"
-                       onClick={(e) => { e.preventDefault(); navegar("adoptar") }}>
-                        ← Volver a adoptar
-                    </a>
+                <section className="seccion" style={{paddingTop: "48px"}}>
+                    <div className="contenedor">
 
-                    {!mascota ? (
-                        <p className="vacio">Cargando...</p>
-                    ) : (
-                        <div className="detalle">
+                        <a href="#adoptar" className="volver"
+                           onClick={(e) => { e.preventDefault(); navegar("adoptar") }}>
+                            <span aria-hidden="true">←</span> Volver a adoptar
+                        </a>
 
-                            <div className="detalle-img">
-                                <img src={getImagenURL(mascota)} alt={mascota.nombre} />
-                            </div>
+                        {!mascota ? (
+                            <p className="vacio" role="status" aria-live="polite">Cargando...</p>
+                        ) : (
+                            <article className="detalle" aria-labelledby="mascota-nombre">
 
-                            <div className="detalle-datos">
-
-                                <span className="badge">{mascota.estado}</span>
-
-                                <h1>{mascota.nombre}</h1>
-                                <p className="detalle-meta">{mascota.raza} · {mascota.ciudad}</p>
-
-                                <ul className="detalle-datos-lista">
-                                    <li className="detalle-dato">
-                                        <span className="etiqueta">Tipo</span>
-                                        <span className="valor">{mascota.tipo}</span>
-                                    </li>
-                                    <li className="detalle-dato">
-                                        <span className="etiqueta">Sexo</span>
-                                        <span className="valor">{mascota.sexo}</span>
-                                    </li>
-                                    <li className="detalle-dato">
-                                        <span className="etiqueta">Edad</span>
-                                        <span className="valor">{mascota.edad} años</span>
-                                    </li>
-                                    <li className="detalle-dato">
-                                        <span className="etiqueta">Ciudad</span>
-                                        <span className="valor">{mascota.ciudad}</span>
-                                    </li>
-                                </ul>
-
-                                {mascota.descripcion && (
-                                    <p className="detalle-descripcion">{mascota.descripcion}</p>
-                                )}
-
-                                <div style={{display: "flex", gap: "12px", flexWrap: "wrap"}}>
-                                    {mascota.estado === "disponible" ? (
-                                        <button onClick={abrirFormulario} className="btn btn-acento btn-grande">
-                                            Solicitar adopción →
-                                        </button>
-                                    ) : (
-                                        <button disabled className="btn btn-grande" style={{opacity: 0.5, cursor: "not-allowed"}}>
-                                            {mascota.estado === "reservada" ? "Reservada" : "Adoptada"}
-                                        </button>
-                                    )}
-                                    <button onClick={contactar} className="btn btn-ghost btn-grande">
-                                        Contactar con el refugio
-                                    </button>
+                                <div className="detalle-img">
+                                    <img src={getImagenURL(mascota)} alt={`Foto de ${mascota.nombre}`} />
                                 </div>
 
-                            </div>
+                                <div className="detalle-datos">
 
-                        </div>
-                    )}
+                                    <span className="badge">{mascota.estado}</span>
 
-                </div>
-            </section>
+                                    <h1 id="mascota-nombre">{mascota.nombre}</h1>
+                                    <p className="detalle-meta">{mascota.raza} · {mascota.ciudad}</p>
+
+                                    <dl className="detalle-datos-lista">
+                                        <div className="detalle-dato">
+                                            <dt className="etiqueta">Tipo</dt>
+                                            <dd className="valor">{mascota.tipo}</dd>
+                                        </div>
+                                        <div className="detalle-dato">
+                                            <dt className="etiqueta">Sexo</dt>
+                                            <dd className="valor">{mascota.sexo}</dd>
+                                        </div>
+                                        <div className="detalle-dato">
+                                            <dt className="etiqueta">Edad</dt>
+                                            <dd className="valor">{mascota.edad} años</dd>
+                                        </div>
+                                        <div className="detalle-dato">
+                                            <dt className="etiqueta">Ciudad</dt>
+                                            <dd className="valor">{mascota.ciudad}</dd>
+                                        </div>
+                                    </dl>
+
+                                    {mascota.descripcion && (
+                                        <p className="detalle-descripcion">{mascota.descripcion}</p>
+                                    )}
+
+                                    <div style={{display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center"}}>
+                                        {mascota.estado === "disponible" ? (
+                                            <button
+                                                type="button"
+                                                onClick={abrirFormulario}
+                                                className="btn btn-acento btn-grande">
+                                                Solicitar adopción
+                                                <span aria-hidden="true"> →</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                disabled
+                                                className="btn btn-grande"
+                                                style={{opacity: 0.5, cursor: "not-allowed"}}>
+                                                {mascota.estado === "reservada" ? "Reservada" : "Adoptada"}
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={contactar}
+                                            className="btn btn-ghost btn-grande">
+                                            Contactar con el refugio
+                                        </button>
+
+                                        <Favorito
+                                            mascotaId={mascota.id}
+                                            usuario={usuario}
+                                            tamano="grande" />
+                                    </div>
+
+                                </div>
+
+                            </article>
+                        )}
+
+                    </div>
+                </section>
+
+            </main>
 
             <Footer navegar={navegar} />
 
@@ -214,15 +223,20 @@ export default function Mascota({ id, usuario, onLogout, navegar }) {
                     onCerrar={() => setToast(null)}
                 />
             )}
-
-        </div>
+        </>
     )
 }
 
 
-// ====== FORMULARIO DE ADOPCIÓN (modal) ======
+// ====== FORMULARIO DE ADOPCIÓN (modal accesible) ======
 // Se abre al pulsar "Solicitar adopción". Recoge los datos del adoptante
-// para que el refugio pueda evaluar su perfil antes de aceptar la adopción.
+// para que el refugio pueda evaluar su perfil.
+//
+// Mejoras de accesibilidad:
+//   - role="dialog" + aria-modal + aria-labelledby
+//   - foco inicial en el primer campo
+//   - se cierra con la tecla Escape
+//   - todos los campos con labels conectados (htmlFor/id)
 
 function FormularioAdopcion({ mascotaNombre, onCerrar, onEnviar }){
 
@@ -238,10 +252,33 @@ function FormularioAdopcion({ mascotaNombre, onCerrar, onEnviar }){
 
     const [error, setError] = useState("")
 
+    const primerCampoRef = useRef(null)
 
-    function enviar(){
 
-        // validación básica de los campos obligatorios
+    // al abrir el modal: poner el foco en el primer campo
+    useEffect(() => {
+        if(primerCampoRef.current){
+            primerCampoRef.current.focus()
+        }
+    }, [])
+
+
+    // cerrar con Escape
+    useEffect(() => {
+        function teclaPulsada(e){
+            if(e.key === "Escape"){
+                onCerrar()
+            }
+        }
+        document.addEventListener("keydown", teclaPulsada)
+        return () => document.removeEventListener("keydown", teclaPulsada)
+    }, [onCerrar])
+
+
+    function enviar(e){
+
+        e.preventDefault()
+
         if(!nombre || !direccion || !motivo){
             setError("Por favor, rellena todos los campos obligatorios")
             return
@@ -271,94 +308,154 @@ function FormularioAdopcion({ mascotaNombre, onCerrar, onEnviar }){
 
     return (
         <div className="modal-overlay" onClick={onCerrar}>
-            <div className="modal-caja" onClick={(e) => e.stopPropagation()}>
+            <div
+                className="modal-caja"
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="form-adopcion-titulo">
 
-                <div className="modal-cabecera">
-                    <h3>Solicitud de adopción {mascotaNombre && "— " + mascotaNombre}</h3>
-                    <button className="modal-cerrar" onClick={onCerrar}>×</button>
-                </div>
+                <header className="modal-cabecera">
+                    <h2 id="form-adopcion-titulo">
+                        Solicitud de adopción{mascotaNombre && " — " + mascotaNombre}
+                    </h2>
+                    <button
+                        type="button"
+                        className="modal-cerrar"
+                        onClick={onCerrar}
+                        aria-label="Cerrar formulario">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </header>
 
                 <p style={{fontSize: "14px", color: "var(--gris-500)", marginBottom: "20px"}}>
                     Cuéntanos un poco sobre ti para que el refugio pueda valorar tu solicitud.
                 </p>
 
-                {error && <div className="error-box">{error}</div>}
+                {error && <div className="error-box" role="alert">{error}</div>}
 
-                <div className="campo">
-                    <label>Nombre completo *</label>
-                    <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
-                </div>
+                <form onSubmit={enviar} noValidate>
 
-                <div className="campo">
-                    <label>¿Eres mayor de edad? *</label>
-                    <label className="check-opcion">
-                        <input type="checkbox" checked={mayorEdad} onChange={(e) => setMayorEdad(e.target.checked)} />
-                        Sí, confirmo que soy mayor de edad
-                    </label>
-                </div>
+                    <div className="campo">
+                        <label htmlFor="ad-nombre" data-required>Nombre completo</label>
+                        <input
+                            ref={primerCampoRef}
+                            id="ad-nombre"
+                            value={nombre}
+                            onChange={(e) => setNombre(e.target.value)}
+                            autoComplete="name"
+                            required
+                            aria-required="true" />
+                    </div>
 
-                <div className="campo">
-                    <label>Dirección *</label>
-                    <input value={direccion} onChange={(e) => setDireccion(e.target.value)}
-                           placeholder="Calle, número, ciudad" />
-                </div>
+                    <div className="campo">
+                        <label htmlFor="ad-mayor-edad" data-required>¿Eres mayor de edad?</label>
+                        <label className="check-opcion">
+                            <input
+                                id="ad-mayor-edad"
+                                type="checkbox"
+                                checked={mayorEdad}
+                                onChange={(e) => setMayorEdad(e.target.checked)}
+                                required
+                                aria-required="true" />
+                            Sí, confirmo que soy mayor de edad
+                        </label>
+                    </div>
 
-                <div className="campo">
-                    <label>Tipo de vivienda *</label>
-                    <select value={tipoVivienda} onChange={(e) => setTipoVivienda(e.target.value)}>
-                        <option value="piso">Piso</option>
-                        <option value="casa">Casa</option>
-                        <option value="atico">Ático</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                </div>
+                    <div className="campo">
+                        <label htmlFor="ad-direccion" data-required>Dirección</label>
+                        <input
+                            id="ad-direccion"
+                            value={direccion}
+                            onChange={(e) => setDireccion(e.target.value)}
+                            placeholder="Calle, número, ciudad"
+                            autoComplete="street-address"
+                            required
+                            aria-required="true" />
+                    </div>
 
-                <div className="campo">
-                    <label>¿Tienes jardín o terraza?</label>
-                    <label className="check-opcion">
-                        <input type="checkbox" checked={jardin} onChange={(e) => setJardin(e.target.checked)} />
-                        Sí, dispongo de jardín o terraza
-                    </label>
-                </div>
+                    <div className="campo">
+                        <label htmlFor="ad-vivienda" data-required>Tipo de vivienda</label>
+                        <select
+                            id="ad-vivienda"
+                            value={tipoVivienda}
+                            onChange={(e) => setTipoVivienda(e.target.value)}>
+                            <option value="piso">Piso</option>
+                            <option value="casa">Casa</option>
+                            <option value="atico">Ático</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
 
-                <div className="campo">
-                    <label>¿Tienes experiencia previa con mascotas?</label>
-                    <label className="check-opcion">
-                        <input type="checkbox" checked={experiencia} onChange={(e) => setExperiencia(e.target.checked)} />
-                        Sí, ya he tenido mascotas antes
-                    </label>
-                </div>
+                    <div className="campo">
+                        <label htmlFor="ad-jardin">¿Tienes jardín o terraza?</label>
+                        <label className="check-opcion">
+                            <input
+                                id="ad-jardin"
+                                type="checkbox"
+                                checked={jardin}
+                                onChange={(e) => setJardin(e.target.checked)} />
+                            Sí, dispongo de jardín o terraza
+                        </label>
+                    </div>
 
-                <div className="campo">
-                    <label>¿Tienes otras mascotas? (opcional)</label>
-                    <input value={otrasMascotas} onChange={(e) => setOtrasMascotas(e.target.value)}
-                           placeholder="Ej: un perro de 5 años" />
-                </div>
+                    <div className="campo">
+                        <label htmlFor="ad-experiencia">¿Tienes experiencia previa con mascotas?</label>
+                        <label className="check-opcion">
+                            <input
+                                id="ad-experiencia"
+                                type="checkbox"
+                                checked={experiencia}
+                                onChange={(e) => setExperiencia(e.target.checked)} />
+                            Sí, ya he tenido mascotas antes
+                        </label>
+                    </div>
 
-                <div className="campo">
-                    <label>Motivo de la adopción *</label>
-                    <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)}
-                              rows="4"
-                              placeholder="Cuéntanos por qué quieres adoptar a esta mascota"></textarea>
-                </div>
+                    <div className="campo">
+                        <label htmlFor="ad-otras">¿Tienes otras mascotas? (opcional)</label>
+                        <input
+                            id="ad-otras"
+                            value={otrasMascotas}
+                            onChange={(e) => setOtrasMascotas(e.target.value)}
+                            placeholder="Ej: un perro de 5 años" />
+                    </div>
 
-                <div className="campo">
-                    <label>Situación laboral *</label>
-                    <select value={situacionLaboral} onChange={(e) => setSituacionLaboral(e.target.value)}>
-                        <option value="trabajo_fijo">Trabajo fijo</option>
-                        <option value="autonomo">Autónomo</option>
-                        <option value="estudiante">Estudiante</option>
-                        <option value="desempleado">Desempleado</option>
-                        <option value="jubilado">Jubilado</option>
-                    </select>
-                </div>
+                    <div className="campo">
+                        <label htmlFor="ad-motivo" data-required>Motivo de la adopción</label>
+                        <textarea
+                            id="ad-motivo"
+                            value={motivo}
+                            onChange={(e) => setMotivo(e.target.value)}
+                            rows="4"
+                            placeholder="Cuéntanos por qué quieres adoptar a esta mascota"
+                            required
+                            aria-required="true" />
+                    </div>
 
-                <div style={{display: "flex", gap: "12px", marginTop: "20px"}}>
-                    <button onClick={onCerrar} className="btn btn-ghost">Cancelar</button>
-                    <button onClick={enviar} className="btn btn-acento" style={{flex: 1}}>
-                        Enviar solicitud
-                    </button>
-                </div>
+                    <div className="campo">
+                        <label htmlFor="ad-laboral" data-required>Situación laboral</label>
+                        <select
+                            id="ad-laboral"
+                            value={situacionLaboral}
+                            onChange={(e) => setSituacionLaboral(e.target.value)}>
+                            <option value="trabajo_fijo">Trabajo fijo</option>
+                            <option value="autonomo">Autónomo</option>
+                            <option value="estudiante">Estudiante</option>
+                            <option value="desempleado">Desempleado</option>
+                            <option value="jubilado">Jubilado</option>
+                        </select>
+                    </div>
+
+                    <div style={{display: "flex", gap: "12px", marginTop: "20px"}}>
+                        <button type="button" onClick={onCerrar} className="btn btn-ghost">
+                            Cancelar
+                        </button>
+                        <button type="submit" className="btn btn-acento" style={{flex: 1}}>
+                            Enviar solicitud
+                        </button>
+                    </div>
+
+                </form>
 
             </div>
         </div>

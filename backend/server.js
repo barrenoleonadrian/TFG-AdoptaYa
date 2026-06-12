@@ -39,6 +39,7 @@ app.use(require('./routes/refugiosRoutes'))
 app.use(require('./routes/mensajesRoutes'))
 app.use(require('./routes/misMascotasRoutes'))
 app.use(require('./routes/favoritosRoutes'))
+app.use(require('./routes/valoracionesRoutes'))
 
 
 // ====== MANEJO DE ERRORES ======

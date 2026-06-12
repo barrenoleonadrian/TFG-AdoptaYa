@@ -145,7 +145,7 @@ function solicitudesDelAdoptante(usuarioId){
         const sql = `
             SELECT s.id, s.estado, s.fecha,
                    m.id AS mascota_id, m.nombre AS mascota_nombre, m.imagen AS mascota_imagen,
-                   u.nombre AS refugio_nombre
+                   u.id AS refugio_id, u.nombre AS refugio_nombre
             FROM solicitudes_adopcion s
             JOIN mascotas m ON m.id = s.mascota_id
             JOIN usuarios u ON u.id = m.usuario_id

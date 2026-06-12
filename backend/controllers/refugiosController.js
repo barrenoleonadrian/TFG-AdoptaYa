@@ -4,31 +4,34 @@
 // La tabla `refugios` solo guarda los datos específicos (cif, descripcion,
 // imagen). Los datos comunes (nombre, email, telefono, ciudad) viven en
 // `usuarios` y se obtienen mediante JOIN.
+//
+// IMPORTANTE: en todas las queries devolvemos `r.usuario_id AS id` para
+// que el id que ve el frontend sea el id del usuario protectora (no el
+// id de la fila en la tabla refugios). Así otras entidades como
+// valoraciones, mensajes o solicitudes, que referencian al usuario,
+// pueden hacer match correctamente.
 
 const db = require("../db")
 
 
 // ====== PÚBLICO ======
 
-// Listar todos los refugios verificados. Acepta un parámetro opcional
-// ?limite=N para que el home pueda pedir solo los N primeros.
-// JOIN con usuarios para obtener nombre/email/telefono/ciudad,
-// LEFT JOIN con mascotas para contar cuántas tiene publicadas.
+// Listar todos los refugios verificados.
 exports.listarRefugios = (req, res) => {
 
     const limite = req.query.limite ? parseInt(req.query.limite) : null
 
     let sql = `
         SELECT
-            r.id, r.usuario_id, r.cif, r.descripcion, r.imagen,
+            r.usuario_id AS id, r.cif, r.descripcion, r.imagen,
             u.nombre, u.email, u.telefono, u.ciudad,
             COUNT(m.id) AS num_mascotas
         FROM refugios r
         INNER JOIN usuarios u ON u.id = r.usuario_id
         LEFT JOIN mascotas m ON m.usuario_id = r.usuario_id
         WHERE u.verificado = TRUE
-        GROUP BY r.id
-        ORDER BY r.id ASC
+        GROUP BY r.usuario_id
+        ORDER BY u.id ASC
     `
 
     if(limite){
@@ -47,20 +50,21 @@ exports.listarRefugios = (req, res) => {
 
 
 // Obtener un refugio concreto + sus mascotas, para el modal de detalle.
+// El :id en la URL ahora es el usuario_id.
 exports.obtenerRefugio = (req, res) => {
 
-    const id = req.params.id
+    const usuarioId = req.params.id
 
     const sqlRefugio = `
         SELECT
-            r.id, r.usuario_id, r.cif, r.descripcion, r.imagen,
+            r.usuario_id AS id, r.cif, r.descripcion, r.imagen,
             u.nombre, u.email, u.telefono, u.ciudad
         FROM refugios r
         INNER JOIN usuarios u ON u.id = r.usuario_id
-        WHERE r.id = ?
+        WHERE r.usuario_id = ?
     `
 
-    db.query(sqlRefugio, [id], (err, result) => {
+    db.query(sqlRefugio, [usuarioId], (err, result) => {
 
         if(err){
             console.log("ERROR SQL:", err)
@@ -73,10 +77,10 @@ exports.obtenerRefugio = (req, res) => {
 
         const refugio = result[0]
 
-        // segunda consulta: las mascotas que ha publicado este refugio
+        // las mascotas que ha publicado este refugio
         const sqlMascotas = "SELECT * FROM mascotas WHERE usuario_id = ? ORDER BY id DESC"
 
-        db.query(sqlMascotas, [refugio.usuario_id], (err, mascotas) => {
+        db.query(sqlMascotas, [usuarioId], (err, mascotas) => {
             if(err){
                 console.log("ERROR SQL:", err)
                 return res.status(500).json({mensaje:"Error del servidor", detalle: err.message})
@@ -94,8 +98,7 @@ exports.obtenerRefugio = (req, res) => {
 
 // ====== PRIVADO (solo el propio refugio) ======
 
-// Obtener mi perfil de refugio. Hacemos JOIN para devolver también
-// los datos comunes (nombre, email, telefono, ciudad) desde usuarios.
+// Obtener mi perfil de refugio.
 exports.miRefugio = (req, res) => {
 
     if(req.usuario.tipo !== "protectora"){
@@ -104,7 +107,7 @@ exports.miRefugio = (req, res) => {
 
     const sql = `
         SELECT
-            r.id, r.usuario_id, r.cif, r.descripcion, r.imagen,
+            r.usuario_id AS id, r.cif, r.descripcion, r.imagen,
             u.nombre, u.email, u.telefono, u.ciudad
         FROM refugios r
         INNER JOIN usuarios u ON u.id = r.usuario_id
@@ -130,7 +133,6 @@ exports.miRefugio = (req, res) => {
 // Actualizar mi perfil de refugio.
 // Los datos comunes (nombre, email, telefono, ciudad) van a `usuarios`.
 // Los datos específicos (descripcion, imagen) van a `refugios`.
-// Se actualizan las dos tablas en secuencia.
 exports.guardarMiRefugio = (req, res) => {
 
     if(req.usuario.tipo !== "protectora"){
@@ -160,7 +162,6 @@ exports.guardarMiRefugio = (req, res) => {
         }
 
         // después actualizamos los datos específicos en `refugios`.
-        // Si no hay imagen nueva, mantenemos la que ya tenía guardada.
         const sqlRefugio = imagenNueva
             ? "UPDATE refugios SET descripcion = ?, imagen = ? WHERE usuario_id = ?"
             : "UPDATE refugios SET descripcion = ? WHERE usuario_id = ?"

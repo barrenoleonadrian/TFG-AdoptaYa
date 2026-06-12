@@ -117,6 +117,28 @@ CREATE TABLE IF NOT EXISTS favoritos (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     FOREIGN KEY (mascota_id) REFERENCES mascotas(id) ON DELETE CASCADE
 );
+
+-- ============================================
+-- VALORACIONES
+-- ============================================
+-- Reseñas que los adoptantes dejan a los refugios después de tener
+-- una solicitud aprobada con ellos. Cada usuario solo puede valorar
+-- una vez a cada refugio (UNIQUE), pero puede editar su valoración.
+-- Solo se permite valorar si existe una solicitud aprobada entre
+-- el adoptante y el refugio (esa validación se hace en el backend).
+
+CREATE TABLE IF NOT EXISTS valoraciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    refugio_id INT NOT NULL,
+    adoptante_id INT NOT NULL,
+    estrellas TINYINT NOT NULL,
+    comentario TEXT,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_valoracion (refugio_id, adoptante_id),
+    FOREIGN KEY (refugio_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (adoptante_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CHECK (estrellas BETWEEN 1 AND 5)
+);
 -- ============================================
 -- USUARIO ADMIN POR DEFECTO
 -- Email: admin@adoptaya.com
@@ -130,3 +152,4 @@ VALUES (
     'admin',
     TRUE
 );
+
